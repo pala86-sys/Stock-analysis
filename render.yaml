@@ -6,8 +6,8 @@ services:
     name: stock-observer
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements-web.txt
-    startCommand: uvicorn web_app:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install --upgrade pip && pip install -r requirements-web.txt
+    startCommand: python -m uvicorn web_app:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.9"

@@ -42,8 +42,8 @@ git push -u origin main
 2. **New → Blueprint**（若 repo 含 `render.yaml`）或 **New → Web Service**
 3. 連接 GitHub 儲存庫
 4. 設定（若手動建立）：
-   - **Build Command:** `pip install -r requirements-web.txt`
-   - **Start Command:** `uvicorn web_app:app --host 0.0.0.0 --port $PORT`
+   - **Build Command:** `pip install --upgrade pip && pip install -r requirements-web.txt`
+   - **Start Command:** `python -m uvicorn web_app:app --host 0.0.0.0 --port $PORT`
    - **Health Check Path:** `/api/health`
 5. 選 **Free** 方案 → Deploy
 
