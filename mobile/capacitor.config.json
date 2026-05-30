@@ -1,0 +1,11 @@
+{
+  "appId": "tw.stock.observer",
+  "appName": "台股觀測儀",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

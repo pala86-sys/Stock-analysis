@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+.build-venv/
+venv/
+.env
+build/
+dist/
+*.spec.bak
+settings.json
+stock_list_cache.json
+
+# Android 打包（勿提交產物與機密）
+mobile/node_modules/
+mobile/www/
+mobile/android/
+mobile/api-url.txt
+mobile/.gradle/
+
+# 桌面打包產物（Web 部署不需）
+build/
+dist/
+.build-venv/

@@ -1,0 +1,14 @@
+# Render 部署設定
+# 文件：https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: stock-observer
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements-web.txt
+    startCommand: uvicorn web_app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+    healthCheckPath: /api/health

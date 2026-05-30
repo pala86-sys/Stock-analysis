@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0071e3">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>台股多維度全方位觀測儀</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>台股多維度全方位觀測儀</h1>
+    <p class="subtitle" id="app-subtitle">基本面 · 技術面 · 籌碼面 · 綜合評估</p>
+  </header>
+
+  <section class="search-bar">
+    <label for="stock-input">請輸入股票名稱或代碼</label>
+    <div class="search-row">
+      <div class="search-wrap">
+        <input id="stock-input" type="text" placeholder="例如：2330 或 台積電" autocomplete="off">
+        <ul id="suggestions" class="suggestions hidden"></ul>
+      </div>
+      <button id="btn-analyze" type="button">開始全方位診斷</button>
+      <button id="btn-report" type="button" class="secondary" disabled>匯出 HTML 報告</button>
+    </div>
+    <p id="status" class="status"></p>
+  </section>
+
+  <main id="results" class="results hidden">
+    <nav class="tabs" id="tabs">
+      <button type="button" class="tab active" data-tab="advice">綜合評估</button>
+      <button type="button" class="tab" data-tab="profile">公司簡介</button>
+      <button type="button" class="tab" data-tab="fundamental">基本面</button>
+      <button type="button" class="tab" data-tab="technical">技術面</button>
+      <button type="button" class="tab" data-tab="chips">籌碼面</button>
+      <button type="button" class="tab" data-tab="news">消息面</button>
+    </nav>
+
+    <div class="panels">
+      <section id="panel-advice" class="panel active"></section>
+      <section id="panel-profile" class="panel"></section>
+      <section id="panel-fundamental" class="panel"></section>
+      <section id="panel-technical" class="panel"></section>
+      <section id="panel-chips" class="panel"></section>
+      <section id="panel-news" class="panel"></section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>資料來源：FinMind + Yahoo Finance · 規則式參考，不構成投資建議</p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
