@@ -3,6 +3,15 @@
 import tkinter as tk
 from tkinter import ttk
 
+from indicators import (
+    eps_filter_label,
+    eps_filter_options,
+    filter_eps_records,
+    filter_revenue_records,
+    revenue_filter_label,
+    revenue_filter_options,
+)
+
 
 def configure_table_styles(style: ttk.Style):
     """設定表格樣式"""
@@ -552,15 +561,28 @@ class FundamentalTab:
             height=5,
         )
 
+        revenue_head = tk.Frame(self.container, bg="white")
+        revenue_head.pack(fill="x", padx=16, pady=(4, 4))
+
         self.revenue_subtitle = tk.Label(
-            self.container,
-            text="每月營收（近 24 個月）",
+            revenue_head,
+            text="每月營收",
             font=("Microsoft JhengHei", 10, "bold"),
             bg="white",
             fg="#444444",
             anchor="w",
         )
-        self.revenue_subtitle.pack(fill="x", padx=16, pady=(4, 4))
+        self.revenue_subtitle.pack(side="left")
+
+        self.revenue_filter_var = tk.StringVar(value="近 24 個月")
+        self.revenue_filter_combo = ttk.Combobox(
+            revenue_head,
+            textvariable=self.revenue_filter_var,
+            state="readonly",
+            width=14,
+        )
+        self.revenue_filter_combo.pack(side="right")
+        self.revenue_filter_combo.bind("<<ComboboxSelected>>", self._on_revenue_filter_change)
 
         revenue_wrap = tk.Frame(self.container, bg="white")
         revenue_wrap.pack(fill="x", padx=16, pady=(0, 10))
@@ -575,15 +597,28 @@ class FundamentalTab:
             height=8,
         )
 
+        eps_head = tk.Frame(self.container, bg="white")
+        eps_head.pack(fill="x", padx=16, pady=(4, 4))
+
         self.eps_subtitle = tk.Label(
-            self.container,
-            text="季 EPS（近 12 季）",
+            eps_head,
+            text="季 EPS",
             font=("Microsoft JhengHei", 10, "bold"),
             bg="white",
             fg="#444444",
             anchor="w",
         )
-        self.eps_subtitle.pack(fill="x", padx=16, pady=(4, 4))
+        self.eps_subtitle.pack(side="left")
+
+        self.eps_filter_var = tk.StringVar(value="近 12 季")
+        self.eps_filter_combo = ttk.Combobox(
+            eps_head,
+            textvariable=self.eps_filter_var,
+            state="readonly",
+            width=14,
+        )
+        self.eps_filter_combo.pack(side="right")
+        self.eps_filter_combo.bind("<<ComboboxSelected>>", self._on_eps_filter_change)
 
         eps_wrap = tk.Frame(self.container, bg="white")
         eps_wrap.pack(fill="x", padx=16, pady=(0, 12))
@@ -597,6 +632,12 @@ class FundamentalTab:
             ],
             height=8,
         )
+
+        self._fundamental_data: dict = {}
+        self._revenue_filter = "24"
+        self._eps_filter = "12"
+        self._revenue_filter_map: dict[str, str] = {}
+        self._eps_filter_map: dict[str, str] = {}
 
         tk.Label(
             self.container,
@@ -664,23 +705,77 @@ class FundamentalTab:
             valuation_rows.insert(0, ("價位說明", metrics["價位說明"]))
         self._fill_tree(self.valuation_tree, valuation_rows)
 
+        self._fundamental_data = data
+        self._setup_revenue_filter_options(data.get("revenue_history", []))
+        self._setup_eps_filter_options(data.get("eps_history", []))
+        self._refresh_revenue_table()
+        self._refresh_eps_table()
+
+    def _setup_revenue_filter_options(self, records: list[dict]):
+        options = revenue_filter_options(records)
+        self._revenue_filter_map = {label: key for key, label in options}
+        labels = [label for _, label in options]
+        self.revenue_filter_combo["values"] = labels
+        current_label = revenue_filter_label(self._revenue_filter, records)
+        if current_label not in labels:
+            self._revenue_filter = "24"
+            current_label = revenue_filter_label("24", records)
+        self.revenue_filter_var.set(current_label)
+
+    def _setup_eps_filter_options(self, records: list[dict]):
+        options = eps_filter_options(records)
+        self._eps_filter_map = {label: key for key, label in options}
+        labels = [label for _, label in options]
+        self.eps_filter_combo["values"] = labels
+        current_label = eps_filter_label(self._eps_filter, records)
+        if current_label not in labels:
+            self._eps_filter = "12"
+            current_label = eps_filter_label("12", records)
+        self.eps_filter_var.set(current_label)
+
+    def _refresh_revenue_table(self):
+        records = self._fundamental_data.get("revenue_history", [])
+        filtered = filter_revenue_records(records, self._revenue_filter)
+        label = revenue_filter_label(self._revenue_filter, records)
+        self.revenue_subtitle.config(text=f"每月營收（{label}）")
         revenue_rows = [
             (r["期間"], r["營收(億)"], r["月增率(%)"], r["年增率(%)"])
-            for r in data.get("revenue_history", [])
+            for r in filtered
         ]
         if revenue_rows:
             self._fill_tree(self.revenue_tree, revenue_rows)
         else:
             self._fill_tree(self.revenue_tree, [("—", "查無月營收資料", "—", "—")])
 
+    def _refresh_eps_table(self):
+        records = self._fundamental_data.get("eps_history", [])
+        filtered = filter_eps_records(records, self._eps_filter)
+        label = eps_filter_label(self._eps_filter, records)
+        self.eps_subtitle.config(text=f"季 EPS（{label}）")
         eps_rows = [
             (r["期間"], r["EPS(元)"], r["季增率(%)"], r["年增率(%)"])
-            for r in data.get("eps_history", [])
+            for r in filtered
         ]
         if eps_rows:
             self._fill_tree(self.eps_tree, eps_rows)
         else:
             self._fill_tree(self.eps_tree, [("—", "查無 EPS 資料", "—", "—")])
+
+    def _on_revenue_filter_change(self, _event=None):
+        label = self.revenue_filter_var.get()
+        self._revenue_filter = self._revenue_filter_map.get(label, "24")
+        self._refresh_revenue_table()
+
+    def _on_eps_filter_change(self, _event=None):
+        label = self.eps_filter_var.get()
+        self._eps_filter = self._eps_filter_map.get(label, "12")
+        self._refresh_eps_table()
+
+    def get_revenue_filter(self) -> str:
+        return self._revenue_filter
+
+    def get_eps_filter(self) -> str:
+        return self._eps_filter
 
     def _fill_tree(self, tree, rows, tags=None):
         self._clear_tree(tree)

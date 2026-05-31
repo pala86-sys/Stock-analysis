@@ -22,6 +22,105 @@ let lastPayload = null;
 let lastAdvice = null;
 let debounceTimer = null;
 let techChartInstance = null;
+let fundamentalCache = null;
+let revenueFilter = "24";
+let epsFilter = "12";
+
+const REVENUE_FILTER_PRESETS = [
+  ["24", "近 24 個月"],
+  ["12", "近 12 個月"],
+  ["ytd", "今年度"],
+  ["last_year", "去年"],
+  ["all", "全部"],
+];
+
+const EPS_FILTER_PRESETS = [
+  ["12", "近 12 季"],
+  ["8", "近 8 季"],
+  ["ytd", "今年度"],
+  ["last_year", "去年"],
+  ["all", "全部"],
+];
+
+function revenueYear(period) {
+  const text = String(period || "").trim();
+  if (!text.includes("/")) return null;
+  const year = parseInt(text.split("/")[0], 10);
+  return Number.isFinite(year) ? year : null;
+}
+
+function epsYear(period) {
+  const text = String(period || "").trim();
+  if (!text) return null;
+  const year = parseInt(text.split(/\s+/)[0], 10);
+  return Number.isFinite(year) ? year : null;
+}
+
+function revenueFilterOptions(records) {
+  const options = [...REVENUE_FILTER_PRESETS];
+  const years = [
+    ...new Set(records.map((r) => revenueYear(r.期間)).filter((y) => y != null)),
+  ].sort((a, b) => b - a);
+  years.forEach((year) => {
+    const key = `year:${year}`;
+    if (!options.some(([k]) => k === key)) options.push([key, `${year} 年`]);
+  });
+  return options;
+}
+
+function epsFilterOptions(records) {
+  const options = [...EPS_FILTER_PRESETS];
+  const years = [
+    ...new Set(records.map((r) => epsYear(r.期間)).filter((y) => y != null)),
+  ].sort((a, b) => b - a);
+  years.forEach((year) => {
+    const key = `year:${year}`;
+    if (!options.some(([k]) => k === key)) options.push([key, `${year} 年`]);
+  });
+  return options;
+}
+
+function filterRevenueRecords(records, mode = "24") {
+  if (!records?.length) return [];
+  if (mode === "all") return [...records];
+  if (mode === "12") return records.slice(0, 12);
+  if (mode === "24") return records.slice(0, 24);
+  const currentYear = new Date().getFullYear();
+  if (mode === "ytd") return records.filter((r) => revenueYear(r.期間) === currentYear);
+  if (mode === "last_year") return records.filter((r) => revenueYear(r.期間) === currentYear - 1);
+  if (mode.startsWith("year:")) {
+    const year = parseInt(mode.split(":")[1], 10);
+    if (!Number.isFinite(year)) return records.slice(0, 24);
+    return records.filter((r) => revenueYear(r.期間) === year);
+  }
+  return records.slice(0, 24);
+}
+
+function filterEpsRecords(records, mode = "12") {
+  if (!records?.length) return [];
+  if (mode === "all") return [...records];
+  if (mode === "8") return records.slice(0, 8);
+  if (mode === "12") return records.slice(0, 12);
+  const currentYear = new Date().getFullYear();
+  if (mode === "ytd") return records.filter((r) => epsYear(r.期間) === currentYear);
+  if (mode === "last_year") return records.filter((r) => epsYear(r.期間) === currentYear - 1);
+  if (mode.startsWith("year:")) {
+    const year = parseInt(mode.split(":")[1], 10);
+    if (!Number.isFinite(year)) return records.slice(0, 12);
+    return records.filter((r) => epsYear(r.期間) === year);
+  }
+  return records.slice(0, 12);
+}
+
+function revenueFilterLabel(mode, records = []) {
+  const match = revenueFilterOptions(records).find(([key]) => key === mode);
+  return match ? match[1] : mode;
+}
+
+function epsFilterLabel(mode, records = []) {
+  const match = epsFilterOptions(records).find(([key]) => key === mode);
+  return match ? match[1] : mode;
+}
 
 function esc(s) {
   const d = document.createElement("div");
@@ -224,6 +323,72 @@ function panelSection(title, content) {
       <h3 class="panel-section-title">${esc(title)}</h3>
       ${content}
     </section>`;
+}
+
+function fundamentalHistorySection(sectionId, title, filterId, options, selectedKey, headers, rows) {
+  const opts = options
+    .map(
+      ([key, label]) =>
+        `<option value="${esc(key)}"${key === selectedKey ? " selected" : ""}>${esc(label)}</option>`
+    )
+    .join("");
+  return `
+    <section class="panel-glass" id="${sectionId}">
+      <div class="panel-section-head">
+        <h3 class="panel-section-title" id="${sectionId}-title">${esc(title)}</h3>
+        <select class="fund-filter" id="${filterId}" aria-label="${esc(title)} 篩選">${opts}</select>
+      </div>
+      <div id="${filterId}-body">
+        ${table(headers, rows)}
+      </div>
+    </section>`;
+}
+
+function bindFundamentalFilters() {
+  const revSel = document.getElementById("revenue-filter");
+  const epsSel = document.getElementById("eps-filter");
+  revSel?.addEventListener("change", () => {
+    revenueFilter = revSel.value;
+    refreshRevenueTable();
+  });
+  epsSel?.addEventListener("change", () => {
+    epsFilter = epsSel.value;
+    refreshEpsTable();
+  });
+}
+
+function refreshRevenueTable() {
+  const f = fundamentalCache;
+  if (!f) return;
+  const records = f.revenue_history || [];
+  const filtered = filterRevenueRecords(records, revenueFilter);
+  const label = revenueFilterLabel(revenueFilter, records);
+  const titleEl = document.getElementById("revenue-section-title");
+  if (titleEl) titleEl.textContent = `每月營收（${label}）`;
+  const body = document.getElementById("revenue-filter-body");
+  if (body) {
+    body.innerHTML = table(
+      ["期間", "營收(億)", "月增率(%)", "年增率(%)"],
+      filtered.map((r) => [r.期間, r["營收(億)"], r["月增率(%)"], r["年增率(%)"]])
+    );
+  }
+}
+
+function refreshEpsTable() {
+  const f = fundamentalCache;
+  if (!f) return;
+  const records = f.eps_history || [];
+  const filtered = filterEpsRecords(records, epsFilter);
+  const label = epsFilterLabel(epsFilter, records);
+  const titleEl = document.getElementById("eps-section-title");
+  if (titleEl) titleEl.textContent = `季 EPS（${label}）`;
+  const body = document.getElementById("eps-filter-body");
+  if (body) {
+    body.innerHTML = table(
+      ["期間", "EPS(元)", "季增率(%)", "年增率(%)"],
+      filtered.map((r) => [r.期間, r["EPS(元)"], r["季增率(%)"], r["年增率(%)"]])
+    );
+  }
 }
 
 function panelError(msg) {
@@ -429,9 +594,11 @@ function renderProfile(p) {
 
 function renderFundamental(f) {
   if (f.錯誤) {
+    fundamentalCache = null;
     $("#panel-fundamental").innerHTML = panelError(f.錯誤);
     return;
   }
+  fundamentalCache = f;
   const m = f.metrics || {};
   const title = formatAdviceTitle(m.顯示名稱 || m.公司名稱 || "基本面分析", m.公司代號 || "");
   const sub = m.副標名稱 || m.英文名稱 || "";
@@ -445,10 +612,19 @@ function renderFundamental(f) {
   const valKeys = ["價位說明", "市值 (億)", "本益比 (PE)", "股價淨值比 (PB)", "每股盈餘 (EPS)", "股利殖利率 (%)"];
   const valRows = valKeys.filter((k) => m[k] != null).map((k) => [k, m[k]]);
 
-  const revRows = (f.revenue_history || []).map((r) => [
+  const revenueRecords = f.revenue_history || [];
+  const epsRecords = f.eps_history || [];
+  const revOptions = revenueFilterOptions(revenueRecords);
+  const epsOptions = epsFilterOptions(epsRecords);
+  if (!revOptions.some(([key]) => key === revenueFilter)) revenueFilter = "24";
+  if (!epsOptions.some(([key]) => key === epsFilter)) epsFilter = "12";
+
+  const revLabel = revenueFilterLabel(revenueFilter, revenueRecords);
+  const epsLabel = epsFilterLabel(epsFilter, epsRecords);
+  const revRows = filterRevenueRecords(revenueRecords, revenueFilter).map((r) => [
     r.期間, r["營收(億)"], r["月增率(%)"], r["年增率(%)"],
   ]);
-  const epsRows = (f.eps_history || []).map((r) => [
+  const epsRows = filterEpsRecords(epsRecords, epsFilter).map((r) => [
     r.期間, r["EPS(元)"], r["季增率(%)"], r["年增率(%)"],
   ]);
 
@@ -456,9 +632,26 @@ function renderFundamental(f) {
     ${panelHeader(title, sub)}
     ${panelSection("基本資料", table(["指標", "數值"], header))}
     ${panelSection("估值指標", table(["指標", "數值"], valRows))}
-    ${panelSection("每月營收", table(["期間", "營收(億)", "月增率(%)", "年增率(%)"], revRows))}
-    ${panelSection("季 EPS", table(["期間", "EPS(元)", "季增率(%)", "年增率(%)"], epsRows))}
+    ${fundamentalHistorySection(
+      "revenue-section",
+      `每月營收（${revLabel}）`,
+      "revenue-filter",
+      revOptions,
+      revenueFilter,
+      ["期間", "營收(億)", "月增率(%)", "年增率(%)"],
+      revRows
+    )}
+    ${fundamentalHistorySection(
+      "eps-section",
+      `季 EPS（${epsLabel}）`,
+      "eps-filter",
+      epsOptions,
+      epsFilter,
+      ["期間", "EPS(元)", "季增率(%)", "年增率(%)"],
+      epsRows
+    )}
   `);
+  bindFundamentalFilters();
 }
 
 function renderTechnical(t, chartB64) {
@@ -638,7 +831,11 @@ async function downloadReport() {
     const res = await fetch(apiUrl("/api/report"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(lastPayload),
+      body: JSON.stringify({
+        ...lastPayload,
+        revenue_filter: revenueFilter,
+        eps_filter: epsFilter,
+      }),
     });
     if (!res.ok) {
       const err = await res.json();

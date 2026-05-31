@@ -339,6 +339,8 @@ class StockApp:
                 self._section_cache,
                 chart_png_bytes=chart_bytes,
                 data_errors=self._last_data_errors or None,
+                revenue_filter=self.fundamental_tab.get_revenue_filter(),
+                eps_filter=self.fundamental_tab.get_eps_filter(),
             )
         except Exception as exc:
             messagebox.showerror("匯出失敗", f"無法寫入報告：\n{exc}")

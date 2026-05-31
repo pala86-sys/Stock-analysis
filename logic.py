@@ -166,8 +166,8 @@ class StockAnalyzer:
                 "股利殖利率 (%)": dividend_yield,
             }
 
-            revenue_history = parse_monthly_revenue(self._source.get_finmind_revenue_raw())
-            eps_history = parse_quarterly_eps(self._source.get_finmind_financial_raw())
+            revenue_history = parse_monthly_revenue(self._source.get_finmind_revenue_raw(), limit=36)
+            eps_history = parse_quarterly_eps(self._source.get_finmind_financial_raw(), limit=16)
 
             return {
                 "metrics": metrics,

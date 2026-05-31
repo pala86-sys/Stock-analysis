@@ -105,7 +105,13 @@ def run_analysis(stock_id: str, display_days: int = 90) -> dict:
     }
 
 
-def build_report_pdf(stock_id: str, result: dict) -> bytes:
+def build_report_pdf(
+    stock_id: str,
+    result: dict,
+    *,
+    revenue_filter: str = "24",
+    eps_filter: str = "12",
+) -> bytes:
     """由分析結果產生 PDF 報告"""
     chart_bytes = None
     if result.get("chart_base64"):
@@ -121,4 +127,6 @@ def build_report_pdf(stock_id: str, result: dict) -> bytes:
         sections,
         chart_png_bytes=chart_bytes,
         data_errors=result.get("errors") or None,
+        revenue_filter=revenue_filter,
+        eps_filter=eps_filter,
     )

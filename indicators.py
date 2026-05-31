@@ -1,6 +1,24 @@
 """技術指標計算與籌碼、基本面數值格式化"""
 
+from datetime import datetime
+
 import pandas as pd
+
+REVENUE_FILTER_PRESETS: list[tuple[str, str]] = [
+    ("24", "近 24 個月"),
+    ("12", "近 12 個月"),
+    ("ytd", "今年度"),
+    ("last_year", "去年"),
+    ("all", "全部"),
+]
+
+EPS_FILTER_PRESETS: list[tuple[str, str]] = [
+    ("12", "近 12 季"),
+    ("8", "近 8 季"),
+    ("ytd", "今年度"),
+    ("last_year", "去年"),
+    ("all", "全部"),
+]
 
 
 def compute_technical_indicators(history: pd.DataFrame) -> pd.DataFrame:
@@ -503,6 +521,120 @@ def parse_monthly_revenue(data: list | None, limit: int = 24) -> list[dict]:
             "年增率(%)": yoy,
         })
     return records
+
+
+def _revenue_year(period: str) -> int | None:
+    text = str(period or "").strip()
+    if not text or "/" not in text:
+        return None
+    try:
+        return int(text.split("/", 1)[0])
+    except ValueError:
+        return None
+
+
+def _eps_year(period: str) -> int | None:
+    text = str(period or "").strip()
+    if not text:
+        return None
+    try:
+        return int(text.split(" ", 1)[0])
+    except ValueError:
+        return None
+
+
+def revenue_filter_options(records: list[dict]) -> list[tuple[str, str]]:
+    """營收篩選選項（含資料中各年度）"""
+    options = list(REVENUE_FILTER_PRESETS)
+    years = sorted(
+        {y for y in (_revenue_year(r.get("期間", "")) for r in records) if y is not None},
+        reverse=True,
+    )
+    for year in years:
+        key = f"year:{year}"
+        if not any(k == key for k, _ in options):
+            options.append((key, f"{year} 年"))
+    return options
+
+
+def eps_filter_options(records: list[dict]) -> list[tuple[str, str]]:
+    """EPS 篩選選項（含資料中各年度）"""
+    options = list(EPS_FILTER_PRESETS)
+    years = sorted(
+        {y for y in (_eps_year(r.get("期間", "")) for r in records) if y is not None},
+        reverse=True,
+    )
+    for year in years:
+        key = f"year:{year}"
+        if not any(k == key for k, _ in options):
+            options.append((key, f"{year} 年"))
+    return options
+
+
+def filter_revenue_records(records: list[dict], mode: str = "24") -> list[dict]:
+    """依篩選模式過濾月營收（records 已由新到舊排序）"""
+    if not records:
+        return []
+
+    if mode == "all":
+        return list(records)
+    if mode == "12":
+        return records[:12]
+    if mode == "24":
+        return records[:24]
+
+    current_year = datetime.now().year
+    if mode == "ytd":
+        return [r for r in records if _revenue_year(r.get("期間", "")) == current_year]
+    if mode == "last_year":
+        return [r for r in records if _revenue_year(r.get("期間", "")) == current_year - 1]
+    if mode.startswith("year:"):
+        try:
+            year = int(mode.split(":", 1)[1])
+        except ValueError:
+            return records[:24]
+        return [r for r in records if _revenue_year(r.get("期間", "")) == year]
+    return records[:24]
+
+
+def filter_eps_records(records: list[dict], mode: str = "12") -> list[dict]:
+    """依篩選模式過濾季 EPS（records 已由新到舊排序）"""
+    if not records:
+        return []
+
+    if mode == "all":
+        return list(records)
+    if mode == "8":
+        return records[:8]
+    if mode == "12":
+        return records[:12]
+
+    current_year = datetime.now().year
+    if mode == "ytd":
+        return [r for r in records if _eps_year(r.get("期間", "")) == current_year]
+    if mode == "last_year":
+        return [r for r in records if _eps_year(r.get("期間", "")) == current_year - 1]
+    if mode.startswith("year:"):
+        try:
+            year = int(mode.split(":", 1)[1])
+        except ValueError:
+            return records[:12]
+        return [r for r in records if _eps_year(r.get("期間", "")) == year]
+    return records[:12]
+
+
+def revenue_filter_label(mode: str, records: list[dict] | None = None) -> str:
+    for key, label in revenue_filter_options(records or []):
+        if key == mode:
+            return label
+    return mode
+
+
+def eps_filter_label(mode: str, records: list[dict] | None = None) -> str:
+    for key, label in eps_filter_options(records or []):
+        if key == mode:
+            return label
+    return mode
 
 
 def _quarter_from_date(date_str: str) -> tuple[int, int]:

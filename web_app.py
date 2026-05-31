@@ -40,6 +40,8 @@ class AnalyzeRequest(BaseModel):
     stock_id: str = Field(default="", description="股票代號")
     query: str = Field(default="", description="代號或名稱")
     display_days: int = Field(default=90, ge=30, le=180)
+    revenue_filter: str = Field(default="24", description="月營收篩選模式")
+    eps_filter: str = Field(default="12", description="季 EPS 篩選模式")
 
 
 @app.get("/api/health")
@@ -76,7 +78,12 @@ def api_report(body: AnalyzeRequest):
 
     try:
         result = run_analysis(stock_id, display_days=body.display_days)
-        pdf_bytes = build_report_pdf(stock_id, result)
+        pdf_bytes = build_report_pdf(
+            stock_id,
+            result,
+            revenue_filter=body.revenue_filter,
+            eps_filter=body.eps_filter,
+        )
         advice = result.get("advice") or {}
         filename = report_download_filename(stock_id, advice)
         ascii_name = f"{stock_id}_report.pdf"

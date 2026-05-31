@@ -20,6 +20,12 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from settings import resource_path
+from indicators import (
+    eps_filter_label,
+    filter_eps_records,
+    filter_revenue_records,
+    revenue_filter_label,
+)
 
 NOTO_FONT_REL = "assets/fonts/NotoSansTC-Regular.ttf"
 FONT_NORMAL = "NotoTC"
@@ -355,7 +361,12 @@ def _profile_block(profile: dict) -> list:
     return flow
 
 
-def _fundamental_block(fundamental: dict) -> list:
+def _fundamental_block(
+    fundamental: dict,
+    *,
+    revenue_filter: str = "24",
+    eps_filter: str = "12",
+) -> list:
     if "錯誤" in fundamental:
         return [_para(fundamental["錯誤"], "error")]
 
@@ -371,13 +382,18 @@ def _fundamental_block(fundamental: dict) -> list:
     valuation_rows = [[k, metrics.get(k, "")] for k in valuation_keys if k in metrics]
     if metrics.get("價位說明"):
         valuation_rows.insert(0, ["價位說明", metrics["價位說明"]])
+
+    revenue_records = fundamental.get("revenue_history") or []
+    eps_records = fundamental.get("eps_history") or []
+    rev_label = revenue_filter_label(revenue_filter, revenue_records)
+    eps_label = eps_filter_label(eps_filter, eps_records)
     revenue_rows = [
         [r.get("期間", ""), r.get("營收(億)", ""), r.get("月增率(%)", ""), r.get("年增率(%)", "")]
-        for r in fundamental.get("revenue_history") or []
+        for r in filter_revenue_records(revenue_records, revenue_filter)
     ]
     eps_rows = [
         [r.get("期間", ""), r.get("EPS(元)", ""), r.get("季增率(%)", ""), r.get("年增率(%)", "")]
-        for r in fundamental.get("eps_history") or []
+        for r in filter_eps_records(eps_records, eps_filter)
     ]
 
     return [
@@ -385,9 +401,9 @@ def _fundamental_block(fundamental: dict) -> list:
         _table(["指標", "數值"], header_rows),
         _para("估值指標", "h3"),
         _table(["指標", "數值"], valuation_rows),
-        _para("每月營收", "h3"),
+        _para(f"每月營收（{rev_label}）", "h3"),
         _table(["期間", "營收(億)", "月增率(%)", "年增率(%)"], revenue_rows),
-        _para("季 EPS", "h3"),
+        _para(f"季 EPS（{eps_label}）", "h3"),
         _table(["期間", "EPS(元)", "季增率(%)", "年增率(%)"], eps_rows),
     ]
 
@@ -500,6 +516,8 @@ def _build_report_flowables(
     *,
     chart_png_bytes: bytes | None = None,
     data_errors: list[str] | None = None,
+    revenue_filter: str = "24",
+    eps_filter: str = "12",
 ) -> list:
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
     company = advice.get("顯示名稱") or advice.get("公司名稱") or stock_id
@@ -521,7 +539,11 @@ def _build_report_flowables(
 
     story.extend(_section("綜合評估", _advice_block(advice)))
     story.extend(_section("公司簡介", _profile_block(sections.get("profile") or {})))
-    story.extend(_section("基本面", _fundamental_block(sections.get("fundamental") or {})))
+    story.extend(_section("基本面", _fundamental_block(
+        sections.get("fundamental") or {},
+        revenue_filter=revenue_filter,
+        eps_filter=eps_filter,
+    )))
     story.extend(_section("技術面", _technical_block(sections.get("technical") or {})))
     if chart_png_bytes:
         story.extend(_section("K 線圖", _chart_block(chart_png_bytes)))
@@ -537,6 +559,8 @@ def build_pdf_report(
     *,
     chart_png_bytes: bytes | None = None,
     data_errors: list[str] | None = None,
+    revenue_filter: str = "24",
+    eps_filter: str = "12",
 ) -> bytes:
     """由分析結果產生 PDF 報告"""
     buf = BytesIO()
@@ -556,6 +580,8 @@ def build_pdf_report(
             sections,
             chart_png_bytes=chart_png_bytes,
             data_errors=data_errors,
+            revenue_filter=revenue_filter,
+            eps_filter=eps_filter,
         )
     )
     return buf.getvalue()
@@ -569,6 +595,8 @@ def export_pdf_report(
     *,
     chart_png_bytes: bytes | None = None,
     data_errors: list[str] | None = None,
+    revenue_filter: str = "24",
+    eps_filter: str = "12",
 ) -> Path:
     """寫入 PDF 報告檔"""
     path = Path(path)
@@ -579,6 +607,8 @@ def export_pdf_report(
             sections,
             chart_png_bytes=chart_png_bytes,
             data_errors=data_errors,
+            revenue_filter=revenue_filter,
+            eps_filter=eps_filter,
         )
     )
     return path
