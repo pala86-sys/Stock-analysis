@@ -952,34 +952,60 @@ th { background: rgba(255, 255, 255, 0.06); white-space: nowrap; color: rgba(232
 }
 
 .chart-probe-bar {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 0.78rem;
-  line-height: 1.5;
   padding: 8px 10px;
   margin-bottom: 6px;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(79, 209, 255, 0.12);
   color: var(--text);
+  overflow-x: auto;
 }
 
-.probe-group {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 10px;
+.probe-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
 }
 
-.probe-group-wide {
-  gap: 4px 14px;
+.probe-table th,
+.probe-table td {
+  border: none;
+  padding: 3px 10px 3px 0;
+  text-align: left;
+  vertical-align: top;
 }
 
-.probe-label {
+.probe-table th[scope="row"] {
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+  width: 3.2em;
+  padding-right: 12px;
+}
+
+.probe-table tr.probe-row-4 td {
+  width: auto;
+  padding-right: 12px;
+}
+
+.probe-row-spacer {
+  padding: 0;
+  width: 3.2em;
+}
+
+.probe-cell-label {
+  display: block;
   color: var(--muted);
   font-size: 0.72rem;
-  min-width: 2.8em;
+  margin-bottom: 2px;
+}
+
+.probe-cell-val {
+  display: block;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .chart-probe-bar .probe-date {
@@ -991,6 +1017,19 @@ th { background: rgba(255, 255, 255, 0.06); white-space: nowrap; color: rgba(232
 .chart-probe-bar .probe-kd,
 .chart-probe-bar .probe-macd {
   color: rgba(232, 244, 255, 0.92);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 520px) {
+  .probe-table tr.probe-row-4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .probe-table tr.probe-row-4 td {
+    width: auto;
+    padding-bottom: 6px;
+  }
 }
 
 .chart-canvas-wrap {

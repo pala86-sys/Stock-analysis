@@ -249,34 +249,40 @@
       const volColor = up ? UP : DOWN;
       const ohlcColor = up ? UP : DOWN;
       probeBar.innerHTML = `
-        <div class="probe-group">
-          <span class="probe-label">日期</span>
-          <span class="probe-date">${row.date}</span>
-        </div>
-        <div class="probe-group">
-          <span class="probe-label">成交量</span>
-          <span class="probe-vol" style="color:${volColor}">${fmtVol(row.volume)}</span>
-        </div>
-        <div class="probe-group probe-group-wide">
-          <span class="probe-label">開盤價</span><span style="color:${ohlcColor}">${fmtPrice(row.open)}</span>
-          <span class="probe-label">最高價</span><span style="color:${ohlcColor}">${fmtPrice(row.high)}</span>
-          <span class="probe-label">最低價</span><span style="color:${ohlcColor}">${fmtPrice(row.low)}</span>
-          <span class="probe-label">收盤價</span><span style="color:${ohlcColor}">${fmtPrice(row.close)}</span>
-        </div>
-        <div class="probe-group probe-group-wide">
-          <span class="probe-label">MA5</span><span style="color:${MA_COLORS.MA5}">${fmtPrice(row.MA5)}</span>
-          <span class="probe-label">MA10</span><span style="color:${MA_COLORS.MA10}">${fmtPrice(row.MA10)}</span>
-          <span class="probe-label">MA20</span><span style="color:${MA_COLORS.MA20}">${fmtPrice(row.MA20)}</span>
-          <span class="probe-label">MA60</span><span style="color:${MA_COLORS.MA60}">${fmtPrice(row.MA60)}</span>
-        </div>
-        <div class="probe-group">
-          <span class="probe-label">KD</span>
-          <span class="probe-kd">K ${fmt(row.K, 1)} · D ${fmt(row.D, 1)}${kdStatus(row.K, row.D)}</span>
-        </div>
-        <div class="probe-group probe-group-wide">
-          <span class="probe-label">MACD</span>
-          <span class="probe-macd">DIF ${fmt(row.DIF)} · DEA ${fmt(row.DEA)} · MACD ${fmt(row.MACD_hist)}</span>
-        </div>
+        <table class="probe-table">
+          <tbody>
+            <tr>
+              <th scope="row">日期</th>
+              <td colspan="4" class="probe-date">${row.date}</td>
+            </tr>
+            <tr>
+              <th scope="row">成交量</th>
+              <td colspan="4" class="probe-vol" style="color:${volColor}">${fmtVol(row.volume)}</td>
+            </tr>
+            <tr class="probe-row-4">
+              <th scope="row" class="probe-row-spacer" aria-hidden="true"></th>
+              <td><span class="probe-cell-label">開盤價</span><span class="probe-cell-val" style="color:${ohlcColor}">${fmtPrice(row.open)}</span></td>
+              <td><span class="probe-cell-label">最高價</span><span class="probe-cell-val" style="color:${ohlcColor}">${fmtPrice(row.high)}</span></td>
+              <td><span class="probe-cell-label">最低價</span><span class="probe-cell-val" style="color:${ohlcColor}">${fmtPrice(row.low)}</span></td>
+              <td><span class="probe-cell-label">收盤價</span><span class="probe-cell-val" style="color:${ohlcColor}">${fmtPrice(row.close)}</span></td>
+            </tr>
+            <tr class="probe-row-4">
+              <th scope="row" class="probe-row-spacer" aria-hidden="true"></th>
+              <td><span class="probe-cell-label">MA5</span><span class="probe-cell-val" style="color:${MA_COLORS.MA5}">${fmtPrice(row.MA5)}</span></td>
+              <td><span class="probe-cell-label">MA10</span><span class="probe-cell-val" style="color:${MA_COLORS.MA10}">${fmtPrice(row.MA10)}</span></td>
+              <td><span class="probe-cell-label">MA20</span><span class="probe-cell-val" style="color:${MA_COLORS.MA20}">${fmtPrice(row.MA20)}</span></td>
+              <td><span class="probe-cell-label">MA60</span><span class="probe-cell-val" style="color:${MA_COLORS.MA60}">${fmtPrice(row.MA60)}</span></td>
+            </tr>
+            <tr>
+              <th scope="row">KD</th>
+              <td colspan="4" class="probe-kd">K ${fmt(row.K, 1)} · D ${fmt(row.D, 1)}${kdStatus(row.K, row.D)}</td>
+            </tr>
+            <tr>
+              <th scope="row">MACD</th>
+              <td colspan="4" class="probe-macd">DIF ${fmt(row.DIF)} · DEA ${fmt(row.DEA)} · MACD ${fmt(row.MACD_hist)}</td>
+            </tr>
+          </tbody>
+        </table>
       `;
     }
 
