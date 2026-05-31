@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-31T07:12:20",
+  "updated_at": "2026-05-31T12:31:18",
   "stocks": [
     {
       "stock_id": "00400A",
@@ -37,11 +37,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "0054",
-      "stock_name": "元大台商50",
-      "market": "twse"
-    },
-    {
       "stock_id": "0055",
       "stock_name": "元大MSCI金融",
       "market": "twse"
@@ -54,21 +49,6 @@
     {
       "stock_id": "0057",
       "stock_name": "富邦摩台",
-      "market": "twse"
-    },
-    {
-      "stock_id": "0058",
-      "stock_name": "富邦發達",
-      "market": "twse"
-    },
-    {
-      "stock_id": "0059",
-      "stock_name": "富邦金融",
-      "market": "twse"
-    },
-    {
-      "stock_id": "0060",
-      "stock_name": "新台灣",
       "market": "twse"
     },
     {
@@ -212,11 +192,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "00649",
-      "stock_name": "FH香港",
-      "market": "twse"
-    },
-    {
       "stock_id": "00650L",
       "stock_name": "復華香港正2",
       "market": "twse"
@@ -262,16 +237,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "00658L",
-      "stock_name": "國泰日本正2",
-      "market": "twse"
-    },
-    {
-      "stock_id": "00659R",
-      "stock_name": "國泰日本反1",
-      "market": "twse"
-    },
-    {
       "stock_id": "00660",
       "stock_name": "元大歐洲50",
       "market": "twse"
@@ -307,11 +272,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "00667",
-      "stock_name": "元大韓國",
-      "market": "twse"
-    },
-    {
       "stock_id": "00668",
       "stock_name": "國泰美國道瓊",
       "market": "twse"
@@ -337,11 +297,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "00672L",
-      "stock_name": "元大S&P原油正2",
-      "market": "twse"
-    },
-    {
       "stock_id": "00673R",
       "stock_name": "期元大S&P原油反1",
       "market": "twse"
@@ -359,11 +314,6 @@
     {
       "stock_id": "00676R",
       "stock_name": "富邦臺灣加權反1",
-      "market": "twse"
-    },
-    {
-      "stock_id": "00677U",
-      "stock_name": "期富邦VIX",
       "market": "twse"
     },
     {
@@ -437,11 +387,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "00691R",
-      "stock_name": "兆豐藍籌30反1",
-      "market": "twse"
-    },
-    {
       "stock_id": "00692",
       "stock_name": "富邦公司治理",
       "market": "twse"
@@ -472,16 +417,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "00698L",
-      "stock_name": "元大美債7-10正2",
-      "market": "twse"
-    },
-    {
-      "stock_id": "00699R",
-      "stock_name": "元大美債7-10反1",
-      "market": "twse"
-    },
-    {
       "stock_id": "00700",
       "stock_name": "富邦恒生國企",
       "market": "twse"
@@ -499,16 +434,6 @@
     {
       "stock_id": "00703",
       "stock_name": "台新MSCI中國",
-      "market": "twse"
-    },
-    {
-      "stock_id": "00704L",
-      "stock_name": "台新MSCI台灣正2",
-      "market": "twse"
-    },
-    {
-      "stock_id": "00705R",
-      "stock_name": "台新MSCI台灣反1",
       "market": "twse"
     },
     {
@@ -562,19 +487,9 @@
       "market": "twse"
     },
     {
-      "stock_id": "00716R",
-      "stock_name": "華頓S&P布蘭特反1",
-      "market": "twse"
-    },
-    {
       "stock_id": "00717",
       "stock_name": "富邦美國特別股",
       "market": "twse"
-    },
-    {
-      "stock_id": "00718B",
-      "stock_name": "富邦中國政策債",
-      "market": "tpex"
     },
     {
       "stock_id": "00719B",
@@ -627,11 +542,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "00729R",
-      "stock_name": "第一金工業30反1",
-      "market": "twse"
-    },
-    {
       "stock_id": "00730",
       "stock_name": "富邦臺灣優質高息",
       "market": "twse"
@@ -639,11 +549,6 @@
     {
       "stock_id": "00731",
       "stock_name": "復華富時高息低波",
-      "market": "twse"
-    },
-    {
-      "stock_id": "00732",
-      "stock_name": "國泰RMB短期報酬",
       "market": "twse"
     },
     {
@@ -690,16 +595,6 @@
       "stock_id": "00741B",
       "stock_name": "富邦全球非投等債",
       "market": "tpex"
-    },
-    {
-      "stock_id": "00742",
-      "stock_name": "新光內需收益",
-      "market": "twse"
-    },
-    {
-      "stock_id": "00743",
-      "stock_name": "國泰中國A150",
-      "market": "twse"
     },
     {
       "stock_id": "00744B",
@@ -812,16 +707,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "00766L",
-      "stock_name": "台新MSCI中國正2",
-      "market": "twse"
-    },
-    {
-      "stock_id": "00767",
-      "stock_name": "FH美國金融股",
-      "market": "twse"
-    },
-    {
       "stock_id": "00768B",
       "stock_name": "復華20年美債",
       "market": "tpex"
@@ -847,23 +732,8 @@
       "market": "tpex"
     },
     {
-      "stock_id": "00774B",
-      "stock_name": "新光中國政金綠債",
-      "market": "twse"
-    },
-    {
-      "stock_id": "00774C",
-      "stock_name": "新光中政金綠債+R",
-      "market": "twse"
-    },
-    {
       "stock_id": "00775B",
       "stock_name": "新光投等債15+",
-      "market": "twse"
-    },
-    {
-      "stock_id": "00776",
-      "stock_name": "新光ICE美國權值",
       "market": "twse"
     },
     {
@@ -902,11 +772,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "00784B",
-      "stock_name": "富邦中國投等債",
-      "market": "tpex"
-    },
-    {
       "stock_id": "00785B",
       "stock_name": "富邦金融投等債",
       "market": "tpex"
@@ -932,11 +797,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "00790B",
-      "stock_name": "復華次順位金融債",
-      "market": "tpex"
-    },
-    {
       "stock_id": "00791B",
       "stock_name": "復華信用債1-5",
       "market": "tpex"
@@ -952,11 +812,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "00794B",
-      "stock_name": "群益7+中國政金債",
-      "market": "tpex"
-    },
-    {
       "stock_id": "00795B",
       "stock_name": "中信美國公債20年",
       "market": "tpex"
@@ -967,29 +822,9 @@
       "market": "tpex"
     },
     {
-      "stock_id": "00798B",
-      "stock_name": "國泰中企A級債7+",
-      "market": "tpex"
-    },
-    {
       "stock_id": "00799B",
       "stock_name": "國泰A級醫療債",
       "market": "tpex"
-    },
-    {
-      "stock_id": "0080",
-      "stock_name": "恒中國",
-      "market": "twse"
-    },
-    {
-      "stock_id": "0081",
-      "stock_name": "恒香港",
-      "market": "twse"
-    },
-    {
-      "stock_id": "008201",
-      "stock_name": "BP上證50",
-      "market": "twse"
     },
     {
       "stock_id": "00830",
@@ -1017,18 +852,8 @@
       "market": "tpex"
     },
     {
-      "stock_id": "00835B",
-      "stock_name": "第一金科技債10+",
-      "market": "tpex"
-    },
-    {
       "stock_id": "00836B",
       "stock_name": "永豐10年A公司債",
-      "market": "tpex"
-    },
-    {
-      "stock_id": "00837B",
-      "stock_name": "永豐15年金融債",
       "market": "tpex"
     },
     {
@@ -1169,11 +994,6 @@
     {
       "stock_id": "00865B",
       "stock_name": "國泰US短期公債",
-      "market": "twse"
-    },
-    {
-      "stock_id": "00866",
-      "stock_name": "新光Shiller CAPE",
       "market": "twse"
     },
     {
@@ -1372,11 +1192,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "00906",
-      "stock_name": "大華元宇宙科技50",
-      "market": "twse"
-    },
-    {
       "stock_id": "00907",
       "stock_name": "永豐優息存股",
       "market": "twse"
@@ -1459,11 +1274,6 @@
     {
       "stock_id": "00924",
       "stock_name": "復華S&P500成長",
-      "market": "twse"
-    },
-    {
-      "stock_id": "00925",
-      "stock_name": "新光標普電動車",
       "market": "twse"
     },
     {
@@ -2312,11 +2122,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "1107",
-      "stock_name": "建台",
-      "market": "twse"
-    },
-    {
       "stock_id": "1108",
       "stock_name": "幸福",
       "market": "twse"
@@ -2397,11 +2202,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "1230",
-      "stock_name": "聯成食",
-      "market": "twse"
-    },
-    {
       "stock_id": "1231",
       "stock_name": "聯華食",
       "market": "twse"
@@ -2455,11 +2255,6 @@
       "stock_id": "1260",
       "stock_name": "富味鄉",
       "market": "emerging"
-    },
-    {
-      "stock_id": "1262",
-      "stock_name": "綠悅-KY",
-      "market": "twse"
     },
     {
       "stock_id": "1264",
@@ -2534,11 +2329,6 @@
     {
       "stock_id": "1310",
       "stock_name": "台苯",
-      "market": "twse"
-    },
-    {
-      "stock_id": "1311",
-      "stock_name": "福聚",
       "market": "twse"
     },
     {
@@ -2847,11 +2637,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "1469",
-      "stock_name": "理隆",
-      "market": "twse"
-    },
-    {
       "stock_id": "1470",
       "stock_name": "大統新創",
       "market": "twse"
@@ -2912,11 +2697,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "1507",
-      "stock_name": "永大",
-      "market": "twse"
-    },
-    {
       "stock_id": "1512",
       "stock_name": "瑞利",
       "market": "twse"
@@ -2952,11 +2732,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "1520",
-      "stock_name": "復盛",
-      "market": "twse"
-    },
-    {
       "stock_id": "1521",
       "stock_name": "大億",
       "market": "twse"
@@ -2969,11 +2744,6 @@
     {
       "stock_id": "1522A",
       "stock_name": "堤維西甲特",
-      "market": "twse"
-    },
-    {
-      "stock_id": "1523",
-      "stock_name": "開億",
       "market": "twse"
     },
     {
@@ -3147,11 +2917,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "1592",
-      "stock_name": "英瑞-KY",
-      "market": "twse"
-    },
-    {
       "stock_id": "1593",
       "stock_name": "祺驊",
       "market": "tpex"
@@ -3182,11 +2947,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "1601",
-      "stock_name": "台光",
-      "market": "twse"
-    },
-    {
       "stock_id": "1603",
       "stock_name": "華電",
       "market": "twse"
@@ -3199,11 +2959,6 @@
     {
       "stock_id": "1605",
       "stock_name": "華新",
-      "market": "twse"
-    },
-    {
-      "stock_id": "1606",
-      "stock_name": "歌林",
       "market": "twse"
     },
     {
@@ -3224,11 +2979,6 @@
     {
       "stock_id": "1612",
       "stock_name": "宏泰",
-      "market": "twse"
-    },
-    {
-      "stock_id": "1613",
-      "stock_name": "台一",
       "market": "twse"
     },
     {
@@ -3267,18 +3017,8 @@
       "market": "twse"
     },
     {
-      "stock_id": "1701",
-      "stock_name": "中化",
-      "market": "twse"
-    },
-    {
       "stock_id": "1702",
       "stock_name": "南僑",
-      "market": "twse"
-    },
-    {
-      "stock_id": "1704",
-      "stock_name": "榮化",
       "market": "twse"
     },
     {
@@ -3322,16 +3062,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "1715",
-      "stock_name": "萬洲",
-      "market": "twse"
-    },
-    {
-      "stock_id": "1716",
-      "stock_name": "永信",
-      "market": "twse"
-    },
-    {
       "stock_id": "1717",
       "stock_name": "長興",
       "market": "twse"
@@ -3362,11 +3092,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "1724",
-      "stock_name": "台硝",
-      "market": "twse"
-    },
-    {
       "stock_id": "1725",
       "stock_name": "元禎",
       "market": "twse"
@@ -3379,11 +3104,6 @@
     {
       "stock_id": "1727",
       "stock_name": "中華化",
-      "market": "twse"
-    },
-    {
-      "stock_id": "1729",
-      "stock_name": "必翔",
       "market": "twse"
     },
     {
@@ -3559,11 +3279,6 @@
     {
       "stock_id": "1817",
       "stock_name": "凱撒衛",
-      "market": "twse"
-    },
-    {
-      "stock_id": "1902",
-      "stock_name": "台紙",
       "market": "twse"
     },
     {
@@ -3997,11 +3712,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2301",
-      "stock_name": "光寶科",
-      "market": "twse"
-    },
-    {
       "stock_id": "2302",
       "stock_name": "麗正",
       "market": "twse"
@@ -4022,11 +3732,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2311",
-      "stock_name": "日月光",
-      "market": "twse"
-    },
-    {
       "stock_id": "2312",
       "stock_name": "金寶",
       "market": "twse"
@@ -4039,11 +3744,6 @@
     {
       "stock_id": "2314",
       "stock_name": "台揚",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2315",
-      "stock_name": "神達",
       "market": "twse"
     },
     {
@@ -4069,11 +3769,6 @@
     {
       "stock_id": "2324",
       "stock_name": "仁寶",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2325",
-      "stock_name": "矽品",
       "market": "twse"
     },
     {
@@ -4107,11 +3802,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2336",
-      "stock_name": "致伸",
-      "market": "twse"
-    },
-    {
       "stock_id": "2337",
       "stock_name": "旺宏",
       "market": "twse"
@@ -4124,11 +3814,6 @@
     {
       "stock_id": "2340",
       "stock_name": "台亞",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2341",
-      "stock_name": "英群",
       "market": "twse"
     },
     {
@@ -4167,11 +3852,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2350",
-      "stock_name": "環電",
-      "market": "twse"
-    },
-    {
       "stock_id": "2351",
       "stock_name": "順德",
       "market": "twse"
@@ -4207,11 +3887,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2358",
-      "stock_name": "廷鑫",
-      "market": "twse"
-    },
-    {
       "stock_id": "2359",
       "stock_name": "所羅門",
       "market": "twse"
@@ -4219,11 +3894,6 @@
     {
       "stock_id": "2360",
       "stock_name": "致茂",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2361",
-      "stock_name": "鴻友",
       "market": "twse"
     },
     {
@@ -4302,11 +3972,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2381",
-      "stock_name": "華宇",
-      "market": "twse"
-    },
-    {
       "stock_id": "2382",
       "stock_name": "廣達",
       "market": "twse"
@@ -4314,11 +3979,6 @@
     {
       "stock_id": "2383",
       "stock_name": "台光電",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2384",
-      "stock_name": "勝華",
       "market": "twse"
     },
     {
@@ -4342,11 +4002,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2391",
-      "stock_name": "合勤",
-      "market": "twse"
-    },
-    {
       "stock_id": "2392",
       "stock_name": "正崴",
       "market": "twse"
@@ -4359,11 +4014,6 @@
     {
       "stock_id": "2395",
       "stock_name": "研華",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2396",
-      "stock_name": "精碟",
       "market": "twse"
     },
     {
@@ -4384,11 +4034,6 @@
     {
       "stock_id": "2402",
       "stock_name": "毅嘉",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2403",
-      "stock_name": "友尚",
       "market": "twse"
     },
     {
@@ -4417,11 +4062,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2411",
-      "stock_name": "飛瑞",
-      "market": "twse"
-    },
-    {
       "stock_id": "2412",
       "stock_name": "中華電",
       "market": "twse"
@@ -4444,11 +4084,6 @@
     {
       "stock_id": "2417",
       "stock_name": "圓剛",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2418",
-      "stock_name": "雅新",
       "market": "twse"
     },
     {
@@ -4512,11 +4147,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2432",
-      "stock_name": "倚天",
-      "market": "twse"
-    },
-    {
       "stock_id": "2433",
       "stock_name": "互盛電",
       "market": "twse"
@@ -4529,11 +4159,6 @@
     {
       "stock_id": "2436",
       "stock_name": "偉詮電",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2437",
-      "stock_name": "旺詮",
       "market": "twse"
     },
     {
@@ -4562,28 +4187,8 @@
       "market": "twse"
     },
     {
-      "stock_id": "2443",
-      "stock_name": "昶虹",
-      "market": "twse"
-    },
-    {
       "stock_id": "2444",
       "stock_name": "兆勁",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2446",
-      "stock_name": "全懋",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2447",
-      "stock_name": "鼎新",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2448",
-      "stock_name": "晶電",
       "market": "twse"
     },
     {
@@ -4602,11 +4207,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2452",
-      "stock_name": "乾坤",
-      "market": "twse"
-    },
-    {
       "stock_id": "2453",
       "stock_name": "凌群",
       "market": "twse"
@@ -4619,11 +4219,6 @@
     {
       "stock_id": "2455",
       "stock_name": "全新",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2456",
-      "stock_name": "奇力新",
       "market": "twse"
     },
     {
@@ -4657,11 +4252,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2463",
-      "stock_name": "研揚",
-      "market": "twse"
-    },
-    {
       "stock_id": "2464",
       "stock_name": "盟立",
       "market": "twse"
@@ -4687,11 +4277,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2469",
-      "stock_name": "力信",
-      "market": "twse"
-    },
-    {
       "stock_id": "2471",
       "stock_name": "資通",
       "market": "twse"
@@ -4702,18 +4287,8 @@
       "market": "twse"
     },
     {
-      "stock_id": "2473",
-      "stock_name": "思源",
-      "market": "twse"
-    },
-    {
       "stock_id": "2474",
       "stock_name": "可成",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2475",
-      "stock_name": "華映",
       "market": "twse"
     },
     {
@@ -4729,11 +4304,6 @@
     {
       "stock_id": "2478",
       "stock_name": "大毅",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2479",
-      "stock_name": "和立",
       "market": "twse"
     },
     {
@@ -4797,11 +4367,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2494",
-      "stock_name": "廣業科",
-      "market": "twse"
-    },
-    {
       "stock_id": "2495",
       "stock_name": "普安",
       "market": "twse"
@@ -4819,11 +4384,6 @@
     {
       "stock_id": "2498",
       "stock_name": "宏達電",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2499",
-      "stock_name": "東貝",
       "market": "twse"
     },
     {
@@ -4879,11 +4439,6 @@
     {
       "stock_id": "2524",
       "stock_name": "京城",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2526",
-      "stock_name": "大陸",
       "market": "twse"
     },
     {
@@ -5307,16 +4862,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2807",
-      "stock_name": "竹商銀",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2809",
-      "stock_name": "京城銀",
-      "market": "twse"
-    },
-    {
       "stock_id": "2812",
       "stock_name": "台中銀",
       "market": "twse"
@@ -5332,28 +4877,8 @@
       "market": "twse"
     },
     {
-      "stock_id": "2823",
-      "stock_name": "中壽",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2827",
-      "stock_name": "中聯",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2831",
-      "stock_name": "中華銀",
-      "market": "twse"
-    },
-    {
       "stock_id": "2832",
       "stock_name": "台產",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2833",
-      "stock_name": "台壽保",
       "market": "twse"
     },
     {
@@ -5377,11 +4902,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2837",
-      "stock_name": "萬泰銀",
-      "market": "twse"
-    },
-    {
       "stock_id": "2838",
       "stock_name": "聯邦銀",
       "market": "twse"
@@ -5392,18 +4912,8 @@
       "market": "twse"
     },
     {
-      "stock_id": "2841",
-      "stock_name": "台開",
-      "market": "twse"
-    },
-    {
       "stock_id": "2845",
       "stock_name": "遠東銀",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2847",
-      "stock_name": "大眾銀",
       "market": "twse"
     },
     {
@@ -5427,18 +4937,8 @@
       "market": "twse"
     },
     {
-      "stock_id": "2854",
-      "stock_name": "寶來證",
-      "market": "twse"
-    },
-    {
       "stock_id": "2855",
       "stock_name": "統一證",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2856",
-      "stock_name": "元富證",
       "market": "twse"
     },
     {
@@ -5554,11 +5054,6 @@
     {
       "stock_id": "2887Z1",
       "stock_name": "台新新光己特",
-      "market": "twse"
-    },
-    {
-      "stock_id": "2888",
-      "stock_name": "新光金",
       "market": "twse"
     },
     {
@@ -5707,11 +5202,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "2936",
-      "stock_name": "客思達-KY",
-      "market": "twse"
-    },
-    {
       "stock_id": "2937",
       "stock_name": "集雅社",
       "market": "tpex"
@@ -5787,18 +5277,8 @@
       "market": "twse"
     },
     {
-      "stock_id": "3007",
-      "stock_name": "綠點",
-      "market": "twse"
-    },
-    {
       "stock_id": "3008",
       "stock_name": "大立光",
-      "market": "twse"
-    },
-    {
-      "stock_id": "3009",
-      "stock_name": "奇美電",
       "market": "twse"
     },
     {
@@ -5844,11 +5324,6 @@
     {
       "stock_id": "3019",
       "stock_name": "亞光",
-      "market": "twse"
-    },
-    {
-      "stock_id": "3020",
-      "stock_name": "奇普仕",
       "market": "twse"
     },
     {
@@ -6012,11 +5487,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "3053",
-      "stock_name": "鼎營",
-      "market": "twse"
-    },
-    {
       "stock_id": "3054",
       "stock_name": "立萬利",
       "market": "twse"
@@ -6052,18 +5522,8 @@
       "market": "twse"
     },
     {
-      "stock_id": "3061",
-      "stock_name": "璨圓",
-      "market": "twse"
-    },
-    {
       "stock_id": "3062",
       "stock_name": "建漢",
-      "market": "twse"
-    },
-    {
-      "stock_id": "3063",
-      "stock_name": "飛信",
       "market": "twse"
     },
     {
@@ -6097,11 +5557,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "3080",
-      "stock_name": "威力盟",
-      "market": "twse"
-    },
-    {
       "stock_id": "3081",
       "stock_name": "聯亞",
       "market": "tpex"
@@ -6124,11 +5579,6 @@
     {
       "stock_id": "3088",
       "stock_name": "艾訊",
-      "market": "tpex"
-    },
-    {
-      "stock_id": "3089",
-      "stock_name": "億杰",
       "market": "tpex"
     },
     {
@@ -6220,11 +5670,6 @@
       "stock_id": "3141",
       "stock_name": "晶宏",
       "market": "tpex"
-    },
-    {
-      "stock_id": "3142",
-      "stock_name": "遠茂",
-      "market": "twse"
     },
     {
       "stock_id": "3144",
@@ -6322,11 +5767,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "3202",
-      "stock_name": "樺晟",
-      "market": "tpex"
-    },
-    {
       "stock_id": "3205",
       "stock_name": "佰研",
       "market": "tpex"
@@ -6355,11 +5795,6 @@
       "stock_id": "3213",
       "stock_name": "茂訊",
       "market": "tpex"
-    },
-    {
-      "stock_id": "3214",
-      "stock_name": "元砷",
-      "market": "twse"
     },
     {
       "stock_id": "3217",
@@ -6472,11 +5907,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "3271",
-      "stock_name": "其樂達",
-      "market": "twse"
-    },
-    {
       "stock_id": "3272",
       "stock_name": "東碩",
       "market": "tpex"
@@ -6577,11 +6007,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "3315",
-      "stock_name": "宣昶",
-      "market": "twse"
-    },
-    {
       "stock_id": "3317",
       "stock_name": "尼克森",
       "market": "tpex"
@@ -6667,11 +6092,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "3367",
-      "stock_name": "英華達",
-      "market": "twse"
-    },
-    {
       "stock_id": "3372",
       "stock_name": "典範",
       "market": "tpex"
@@ -6699,11 +6119,6 @@
     {
       "stock_id": "3380",
       "stock_name": "明泰",
-      "market": "twse"
-    },
-    {
-      "stock_id": "3383",
-      "stock_name": "新世紀",
       "market": "twse"
     },
     {
@@ -6797,11 +6212,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "3454",
-      "stock_name": "晶睿",
-      "market": "twse"
-    },
-    {
       "stock_id": "3455",
       "stock_name": "由田",
       "market": "tpex"
@@ -6825,11 +6235,6 @@
       "stock_id": "3473",
       "stock_name": "智通聯網",
       "market": "emerging"
-    },
-    {
-      "stock_id": "3474",
-      "stock_name": "華亞科",
-      "market": "twse"
     },
     {
       "stock_id": "3479",
@@ -6917,11 +6322,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "3514",
-      "stock_name": "昱晶",
-      "market": "twse"
-    },
-    {
       "stock_id": "3515",
       "stock_name": "華擎",
       "market": "twse"
@@ -6934,11 +6334,6 @@
     {
       "stock_id": "3518",
       "stock_name": "柏騰",
-      "market": "twse"
-    },
-    {
-      "stock_id": "3519",
-      "stock_name": "綠能",
       "market": "twse"
     },
     {
@@ -7002,18 +6397,8 @@
       "market": "twse"
     },
     {
-      "stock_id": "3534",
-      "stock_name": "雷凌",
-      "market": "twse"
-    },
-    {
       "stock_id": "3535",
       "stock_name": "晶彩科",
-      "market": "twse"
-    },
-    {
-      "stock_id": "3536",
-      "stock_name": "誠創",
       "market": "twse"
     },
     {
@@ -7087,16 +6472,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "3559",
-      "stock_name": "全智科",
-      "market": "twse"
-    },
-    {
-      "stock_id": "3561",
-      "stock_name": "昇陽光電",
-      "market": "twse"
-    },
-    {
       "stock_id": "3563",
       "stock_name": "牧德",
       "market": "twse"
@@ -7117,11 +6492,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "3573",
-      "stock_name": "穎台",
-      "market": "twse"
-    },
-    {
       "stock_id": "3576",
       "stock_name": "聯合再生",
       "market": "twse"
@@ -7130,11 +6500,6 @@
       "stock_id": "3577",
       "stock_name": "泓格",
       "market": "tpex"
-    },
-    {
-      "stock_id": "3579",
-      "stock_name": "尚志",
-      "market": "twse"
     },
     {
       "stock_id": "3580",
@@ -7149,11 +6514,6 @@
     {
       "stock_id": "3583",
       "stock_name": "辛耘",
-      "market": "twse"
-    },
-    {
-      "stock_id": "3584",
-      "stock_name": "介面",
       "market": "twse"
     },
     {
@@ -7207,16 +6567,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "3598",
-      "stock_name": "奕力",
-      "market": "twse"
-    },
-    {
-      "stock_id": "3599",
-      "stock_name": "旺能",
-      "market": "twse"
-    },
-    {
       "stock_id": "3603",
       "stock_name": "建祥國際",
       "market": "emerging"
@@ -7240,11 +6590,6 @@
       "stock_id": "3611",
       "stock_name": "鼎翰",
       "market": "tpex"
-    },
-    {
-      "stock_id": "3614",
-      "stock_name": "誠致",
-      "market": "twse"
     },
     {
       "stock_id": "3615",
@@ -7315,11 +6660,6 @@
       "stock_id": "3633",
       "stock_name": "云光",
       "market": "emerging"
-    },
-    {
-      "stock_id": "3638",
-      "stock_name": "F-IML",
-      "market": "twse"
     },
     {
       "stock_id": "3642",
@@ -7412,11 +6752,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "3682",
-      "stock_name": "亞太電",
-      "market": "twse"
-    },
-    {
       "stock_id": "3684",
       "stock_name": "榮昌",
       "market": "tpex"
@@ -7454,16 +6789,6 @@
     {
       "stock_id": "3694",
       "stock_name": "海華",
-      "market": "twse"
-    },
-    {
-      "stock_id": "3697",
-      "stock_name": "F-晨星",
-      "market": "twse"
-    },
-    {
-      "stock_id": "3698",
-      "stock_name": "隆達",
       "market": "twse"
     },
     {
@@ -7702,18 +7027,8 @@
       "market": "tpex"
     },
     {
-      "stock_id": "4141",
-      "stock_name": "龍燈-KY",
-      "market": "twse"
-    },
-    {
       "stock_id": "4142",
       "stock_name": "國光生",
-      "market": "twse"
-    },
-    {
-      "stock_id": "4144",
-      "stock_name": "康聯-KY",
       "market": "twse"
     },
     {
@@ -8352,11 +7667,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "4712",
-      "stock_name": "南璋",
-      "market": "tpex"
-    },
-    {
       "stock_id": "4714",
       "stock_name": "永捷",
       "market": "tpex"
@@ -8387,11 +7697,6 @@
       "market": "emerging"
     },
     {
-      "stock_id": "4725",
-      "stock_name": "信昌化",
-      "market": "twse"
-    },
-    {
       "stock_id": "4726",
       "stock_name": "永昕",
       "market": "tpex"
@@ -8410,11 +7715,6 @@
       "stock_id": "4732",
       "stock_name": "彥臣",
       "market": "emerging"
-    },
-    {
-      "stock_id": "4733",
-      "stock_name": "上緯",
-      "market": "twse"
     },
     {
       "stock_id": "4735",
@@ -8692,11 +7992,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "4945",
-      "stock_name": "陞達科技",
-      "market": "tpex"
-    },
-    {
       "stock_id": "4946",
       "stock_name": "辣椒",
       "market": "tpex"
@@ -8800,16 +8095,6 @@
       "stock_id": "4980",
       "stock_name": "佐臻",
       "market": "emerging"
-    },
-    {
-      "stock_id": "4984",
-      "stock_name": "科納-KY",
-      "market": "twse"
-    },
-    {
-      "stock_id": "4987",
-      "stock_name": "科誠",
-      "market": "tpex"
     },
     {
       "stock_id": "4989",
@@ -9027,11 +8312,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "5259",
-      "stock_name": "奕智博",
-      "market": "twse"
-    },
-    {
       "stock_id": "5262",
       "stock_name": "立達",
       "market": "emerging"
@@ -9040,11 +8320,6 @@
       "stock_id": "5263",
       "stock_name": "智崴",
       "market": "tpex"
-    },
-    {
-      "stock_id": "5264",
-      "stock_name": "鎧勝-KY",
-      "market": "twse"
     },
     {
       "stock_id": "5267",
@@ -9085,11 +8360,6 @@
       "stock_id": "5278",
       "stock_name": "尚凡",
       "market": "tpex"
-    },
-    {
-      "stock_id": "5280",
-      "stock_name": "F-敦泰",
-      "market": "twse"
     },
     {
       "stock_id": "5281",
@@ -9160,11 +8430,6 @@
       "stock_id": "5304",
       "stock_name": "鼎創達",
       "market": "tpex"
-    },
-    {
-      "stock_id": "5305",
-      "stock_name": "敦南",
-      "market": "twse"
     },
     {
       "stock_id": "5306",
@@ -9274,11 +8539,6 @@
     {
       "stock_id": "5381",
       "stock_name": "光譜",
-      "market": "tpex"
-    },
-    {
-      "stock_id": "5383",
-      "stock_name": "金利",
       "market": "tpex"
     },
     {
@@ -9627,11 +8887,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "5854",
-      "stock_name": "合庫",
-      "market": "twse"
-    },
-    {
       "stock_id": "5859",
       "stock_name": "遠壽",
       "market": "emerging"
@@ -9702,18 +8957,8 @@
       "market": "twse"
     },
     {
-      "stock_id": "6004",
-      "stock_name": "元京證",
-      "market": "twse"
-    },
-    {
       "stock_id": "6005",
       "stock_name": "群益證",
-      "market": "twse"
-    },
-    {
-      "stock_id": "6012",
-      "stock_name": "金鼎證",
       "market": "twse"
     },
     {
@@ -9832,11 +9077,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "6119",
-      "stock_name": "大傳",
-      "market": "twse"
-    },
-    {
       "stock_id": "6120",
       "stock_name": "達運",
       "market": "twse"
@@ -9892,11 +9132,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "6131",
-      "stock_name": "鈞泰",
-      "market": "twse"
-    },
-    {
       "stock_id": "6133",
       "stock_name": "金橋",
       "market": "twse"
@@ -9945,11 +9180,6 @@
       "stock_id": "6144",
       "stock_name": "得利影",
       "market": "tpex"
-    },
-    {
-      "stock_id": "6145",
-      "stock_name": "勁永",
-      "market": "twse"
     },
     {
       "stock_id": "6146",
@@ -10060,11 +9290,6 @@
       "stock_id": "6171",
       "stock_name": "大城地產",
       "market": "tpex"
-    },
-    {
-      "stock_id": "6172",
-      "stock_name": "互億",
-      "market": "twse"
     },
     {
       "stock_id": "6173",
@@ -10417,16 +9642,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "6251",
-      "stock_name": "定穎",
-      "market": "twse"
-    },
-    {
-      "stock_id": "6255",
-      "stock_name": "奈普",
-      "market": "twse"
-    },
-    {
       "stock_id": "6257",
       "stock_name": "矽格",
       "market": "twse"
@@ -10512,11 +9727,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "6280",
-      "stock_name": "崇貿",
-      "market": "twse"
-    },
-    {
       "stock_id": "6281",
       "stock_name": "全國電",
       "market": "twse"
@@ -10539,26 +9749,6 @@
     {
       "stock_id": "6285",
       "stock_name": "啟碁",
-      "market": "twse"
-    },
-    {
-      "stock_id": "6286",
-      "stock_name": "立錡",
-      "market": "twse"
-    },
-    {
-      "stock_id": "6287",
-      "stock_name": "元隆",
-      "market": "tpex"
-    },
-    {
-      "stock_id": "6288",
-      "stock_name": "聯嘉",
-      "market": "twse"
-    },
-    {
-      "stock_id": "6289",
-      "stock_name": "華上",
       "market": "twse"
     },
     {
@@ -10585,11 +9775,6 @@
       "stock_id": "6403",
       "stock_name": "群登",
       "market": "emerging"
-    },
-    {
-      "stock_id": "6404",
-      "stock_name": "通訊-KY",
-      "market": "tpex"
     },
     {
       "stock_id": "6405",
@@ -10647,16 +9832,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "6422",
-      "stock_name": "君耀-KY",
-      "market": "twse"
-    },
-    {
-      "stock_id": "6423",
-      "stock_name": "億而得-創",
-      "market": "twse"
-    },
-    {
       "stock_id": "6425",
       "stock_name": "易發",
       "market": "tpex"
@@ -10712,11 +9887,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "6446",
-      "stock_name": "藥華藥",
-      "market": "twse"
-    },
-    {
       "stock_id": "6449",
       "stock_name": "鈺邦",
       "market": "twse"
@@ -10727,19 +9897,9 @@
       "market": "twse"
     },
     {
-      "stock_id": "6452",
-      "stock_name": "康友-KY",
-      "market": "twse"
-    },
-    {
       "stock_id": "6456",
       "stock_name": "GIS-KY",
       "market": "twse"
-    },
-    {
-      "stock_id": "6457",
-      "stock_name": "紘康",
-      "market": "tpex"
     },
     {
       "stock_id": "6461",
@@ -10899,11 +10059,6 @@
     {
       "stock_id": "6512",
       "stock_name": "啟發電",
-      "market": "tpex"
-    },
-    {
-      "stock_id": "6514",
-      "stock_name": "芮特-KY",
       "market": "tpex"
     },
     {
@@ -11175,11 +10330,6 @@
       "stock_id": "6588",
       "stock_name": "東典光電",
       "market": "tpex"
-    },
-    {
-      "stock_id": "6589",
-      "stock_name": "台康生技",
-      "market": "twse"
     },
     {
       "stock_id": "6590",
@@ -11587,11 +10737,6 @@
       "market": "emerging"
     },
     {
-      "stock_id": "6702",
-      "stock_name": "興航",
-      "market": "twse"
-    },
-    {
       "stock_id": "6703",
       "stock_name": "軒郁",
       "market": "tpex"
@@ -11745,11 +10890,6 @@
       "stock_id": "6744",
       "stock_name": "豐技生技",
       "market": "emerging"
-    },
-    {
-      "stock_id": "6747",
-      "stock_name": "亨泰光",
-      "market": "tpex"
     },
     {
       "stock_id": "6748",
@@ -13947,11 +13087,6 @@
       "market": "emerging"
     },
     {
-      "stock_id": "8008",
-      "stock_name": "建興電",
-      "market": "twse"
-    },
-    {
       "stock_id": "8011",
       "stock_name": "台通",
       "market": "twse"
@@ -14130,11 +13265,6 @@
       "stock_id": "8077",
       "stock_name": "洛碁",
       "market": "tpex"
-    },
-    {
-      "stock_id": "8078",
-      "stock_name": "華寶",
-      "market": "twse"
     },
     {
       "stock_id": "8080",
@@ -14335,11 +13465,6 @@
       "stock_id": "8183",
       "stock_name": "精星",
       "market": "tpex"
-    },
-    {
-      "stock_id": "8199",
-      "stock_name": "廣鎵",
-      "market": "twse"
     },
     {
       "stock_id": "8201",
@@ -14552,16 +13677,6 @@
       "market": "tpex"
     },
     {
-      "stock_id": "8418",
-      "stock_name": "捷必勝-KY",
-      "market": "tpex"
-    },
-    {
-      "stock_id": "8420",
-      "stock_name": "明揚",
-      "market": "tpex"
-    },
-    {
       "stock_id": "8421",
       "stock_name": "旭源",
       "market": "tpex"
@@ -14585,11 +13700,6 @@
       "stock_id": "8426",
       "stock_name": "紅木-KY",
       "market": "tpex"
-    },
-    {
-      "stock_id": "8427",
-      "stock_name": "基勝-KY",
-      "market": "twse"
     },
     {
       "stock_id": "8429",
@@ -14727,11 +13837,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "8480",
-      "stock_name": "泰昇-KY",
-      "market": "twse"
-    },
-    {
       "stock_id": "8481",
       "stock_name": "政伸",
       "market": "twse"
@@ -14755,11 +13860,6 @@
       "stock_id": "8489",
       "stock_name": "三貝德",
       "market": "tpex"
-    },
-    {
-      "stock_id": "8497",
-      "stock_name": "格威傳媒",
-      "market": "twse"
     },
     {
       "stock_id": "8499",
@@ -14902,21 +14002,6 @@
       "market": "emerging"
     },
     {
-      "stock_id": "910069",
-      "stock_name": "新曄",
-      "market": "twse"
-    },
-    {
-      "stock_id": "9101",
-      "stock_name": "福雷電",
-      "market": "twse"
-    },
-    {
-      "stock_id": "9102",
-      "stock_name": "東亞科",
-      "market": "twse"
-    },
-    {
       "stock_id": "9103",
       "stock_name": "美德醫療-DR",
       "market": "twse"
@@ -14927,38 +14012,8 @@
       "market": "twse"
     },
     {
-      "stock_id": "9104",
-      "stock_name": "萬宇科",
-      "market": "twse"
-    },
-    {
-      "stock_id": "910482",
-      "stock_name": "聖馬丁-DR",
-      "market": "twse"
-    },
-    {
       "stock_id": "9105",
       "stock_name": "泰金寶-DR",
-      "market": "twse"
-    },
-    {
-      "stock_id": "910579",
-      "stock_name": "歐聖",
-      "market": "twse"
-    },
-    {
-      "stock_id": "9106",
-      "stock_name": "新焦點-DR",
-      "market": "twse"
-    },
-    {
-      "stock_id": "910708",
-      "stock_name": "恒大健-DR",
-      "market": "twse"
-    },
-    {
-      "stock_id": "910801",
-      "stock_name": "金衛-DR",
       "market": "twse"
     },
     {
@@ -14967,28 +14022,8 @@
       "market": "twse"
     },
     {
-      "stock_id": "910948",
-      "stock_name": "融達",
-      "market": "twse"
-    },
-    {
       "stock_id": "9110",
       "stock_name": "越南控-DR",
-      "market": "twse"
-    },
-    {
-      "stock_id": "911201",
-      "stock_name": "僑威控",
-      "market": "twse"
-    },
-    {
-      "stock_id": "911602",
-      "stock_name": "華豐泰",
-      "market": "twse"
-    },
-    {
-      "stock_id": "911606",
-      "stock_name": "超級",
       "market": "twse"
     },
     {
@@ -14997,43 +14032,8 @@
       "market": "twse"
     },
     {
-      "stock_id": "911609",
-      "stock_name": "揚子江",
-      "market": "twse"
-    },
-    {
-      "stock_id": "911610",
-      "stock_name": "聯環",
-      "market": "twse"
-    },
-    {
-      "stock_id": "911611",
-      "stock_name": "中泰山-DR",
-      "market": "twse"
-    },
-    {
-      "stock_id": "911612",
-      "stock_name": "滬安",
-      "market": "twse"
-    },
-    {
-      "stock_id": "911616",
-      "stock_name": "杜康-DR",
-      "market": "twse"
-    },
-    {
-      "stock_id": "911619",
-      "stock_name": "耀傑-DR",
-      "market": "twse"
-    },
-    {
       "stock_id": "911622",
       "stock_name": "泰聚亨-DR",
-      "market": "twse"
-    },
-    {
-      "stock_id": "911626",
-      "stock_name": "MSH-DR",
       "market": "twse"
     },
     {
@@ -15047,43 +14047,8 @@
       "market": "twse"
     },
     {
-      "stock_id": "912398",
-      "stock_name": "友佳-DR",
-      "market": "twse"
-    },
-    {
       "stock_id": "9136",
       "stock_name": "巨騰-DR",
-      "market": "twse"
-    },
-    {
-      "stock_id": "913889",
-      "stock_name": "大成糖",
-      "market": "twse"
-    },
-    {
-      "stock_id": "9151",
-      "stock_name": "旺旺",
-      "market": "twse"
-    },
-    {
-      "stock_id": "9157",
-      "stock_name": "陽光能源-DR",
-      "market": "twse"
-    },
-    {
-      "stock_id": "916665",
-      "stock_name": "爾必達",
-      "market": "twse"
-    },
-    {
-      "stock_id": "9188",
-      "stock_name": "精熙-DR",
-      "market": "twse"
-    },
-    {
-      "stock_id": "9801",
-      "stock_name": "力霸",
       "market": "twse"
     },
     {
@@ -15142,11 +14107,6 @@
       "market": "twse"
     },
     {
-      "stock_id": "9915",
-      "stock_name": "億豐",
-      "market": "twse"
-    },
-    {
       "stock_id": "9917",
       "stock_name": "中保科",
       "market": "twse"
@@ -15164,11 +14124,6 @@
     {
       "stock_id": "9921",
       "stock_name": "巨大",
-      "market": "twse"
-    },
-    {
-      "stock_id": "9922",
-      "stock_name": "優美",
       "market": "twse"
     },
     {

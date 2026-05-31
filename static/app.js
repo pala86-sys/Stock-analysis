@@ -513,7 +513,7 @@ async function downloadReport() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${lastPayload.query || lastPayload.stock_id}_report.html`;
+    a.download = `${lastPayload.query || lastPayload.stock_id}_report.pdf`;
     a.click();
     URL.revokeObjectURL(url);
     setStatus("報告已下載");

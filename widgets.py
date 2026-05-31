@@ -821,7 +821,7 @@ class AdviceTab:
         export_row.pack(fill="x", padx=16, pady=(0, 12))
         self.export_btn = tk.Button(
             export_row,
-            text="匯出 HTML 報告",
+            text="匯出 PDF 報告",
             font=("Microsoft JhengHei", 10),
             bg="#0071E3",
             fg="white",

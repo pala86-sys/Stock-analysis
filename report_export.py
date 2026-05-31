@@ -1,9 +1,15 @@
-"""分析報告匯出（HTML）"""
+"""分析報告匯出（PDF）"""
 
-import base64
 import html
+import tempfile
 from datetime import datetime
 from pathlib import Path
+
+from fpdf import FPDF
+
+from settings import resource_path
+
+NOTO_FONT = resource_path("assets/fonts/NotoSansTC-Regular.otf")
 
 
 def _esc(text) -> str:
@@ -210,26 +216,21 @@ def _news_block(news: list) -> str:
     return _table(["#", "標題", "來源", "發布時間", "連結"], rows)
 
 
-def build_html_report(
+def _build_report_body_html(
     stock_id: str,
     advice: dict,
     sections: dict,
     *,
-    chart_png_bytes: bytes | None = None,
+    chart_img_html: str = "",
     data_errors: list[str] | None = None,
 ) -> str:
-    """組裝完整 HTML 報告"""
+    """組裝報告 HTML 內容（供 PDF 轉換）"""
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
     company = advice.get("顯示名稱") or advice.get("公司名稱") or stock_id
 
-    chart_html = ""
-    if chart_png_bytes:
-        b64 = base64.b64encode(chart_png_bytes).decode("ascii")
-        chart_html = f'<img class="chart" src="data:image/png;base64,{b64}" alt="K 線圖">'
-
     warn_html = ""
     if data_errors:
-        warn_html = f'<p class="warn">部分資料未能載入：{_esc("、".join(data_errors))}</p>'
+        warn_html = f'<p><b>部分資料未能載入：</b>{_esc("、".join(data_errors))}</p>'
 
     body_sections = [
         _section("綜合評估", _advice_block(advice)),
@@ -239,66 +240,65 @@ def build_html_report(
         _section("籌碼面", _chips_block(sections.get("chips") or {})),
         _section("消息面", _news_block(sections.get("news") or [])),
     ]
-    if chart_html:
-        body_sections.insert(4, _section("K 線圖", chart_html))
+    if chart_img_html:
+        body_sections.insert(4, _section("K 線圖", chart_img_html))
 
-    return f"""<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{_esc(company)} — 台股分析報告</title>
-<style>
-  body {{ font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; margin: 0; background: #f5f5f7; color: #222; }}
-  .wrap {{ max-width: 960px; margin: 0 auto; padding: 24px 20px 48px; }}
-  header {{ margin-bottom: 24px; }}
-  header h1 {{ margin: 0 0 6px; font-size: 1.5rem; }}
-  header .meta {{ color: #666; font-size: 0.9rem; }}
-  section {{ background: #fff; border-radius: 10px; padding: 18px 20px; margin-bottom: 16px;
-             box-shadow: 0 1px 3px rgba(0,0,0,.06); }}
-  section h2 {{ margin: 0 0 12px; font-size: 1.1rem; color: #0071e3; border-bottom: 1px solid #eee; padding-bottom: 8px; }}
-  section h3 {{ margin: 16px 0 8px; font-size: 0.95rem; color: #444; }}
-  table {{ width: 100%; border-collapse: collapse; font-size: 0.9rem; }}
-  th, td {{ border: 1px solid #eee; padding: 8px 10px; text-align: left; }}
-  th {{ background: #f5f5f7; font-weight: 600; }}
-  tr:nth-child(even) td {{ background: #fafafa; }}
-  .card {{ border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }}
-  .verdict-bull {{ background: #ffebee; }}
-  .verdict-mild-bull {{ background: #e8f0fe; }}
-  .verdict-neutral {{ background: #f5f5f7; }}
-  .verdict-mild-bear {{ background: #fff3e0; }}
-  .verdict-bear {{ background: #eceff1; }}
-  .company {{ margin: 0; color: #222; font-size: 1.2rem; font-weight: bold; }}
-  .company-sub {{ margin: 4px 0 0; color: #888; font-size: 0.9rem; }}
-  .price-level {{ margin: 8px 0 0; font-size: 0.95rem; font-weight: bold; color: #333; }}
-  .stock-price {{ margin: 8px 0 0; font-size: 1.05rem; font-weight: bold; color: #111; }}
-  .verdict {{ margin: 8px 0 4px; font-size: 1.3rem; font-weight: bold; }}
-  .score {{ margin: 0 0 8px; color: #666; }}
-  .suggestion {{ margin: 0; line-height: 1.6; }}
-  .disclaimer {{ margin-top: 12px; font-size: 0.85rem; color: #999; }}
-  .intro {{ line-height: 1.7; white-space: pre-wrap; }}
-  .muted {{ color: #888; }}
-  .error {{ color: #c62828; }}
-  .warn {{ background: #fff8e1; border: 1px solid #ffe082; border-radius: 6px; padding: 10px 14px;
-           color: #795548; margin-bottom: 16px; }}
-  .chart {{ max-width: 100%; height: auto; border-radius: 6px; }}
-  @media print {{ body {{ background: #fff; }} section {{ box-shadow: none; border: 1px solid #ddd; }} }}
-</style>
-</head>
-<body>
-<div class="wrap">
-  <header>
+    return f"""
     <h1>{_esc(company)}（{_esc(stock_id)}）</h1>
-    <p class="meta">台股多維度全方位觀測儀 · 報告產生時間 {generated_at}</p>
+    <p>台股多維度全方位觀測儀 · 報告產生時間 {generated_at}</p>
     {warn_html}
-  </header>
-  {"".join(body_sections)}
-</div>
-</body>
-</html>"""
+    {"".join(body_sections)}
+    """
 
 
-def export_html_report(
+def _register_noto_font(pdf: FPDF) -> None:
+    if not NOTO_FONT.exists():
+        raise FileNotFoundError(f"找不到報告用字型：{NOTO_FONT}")
+    font_path = str(NOTO_FONT)
+    pdf.add_font("Noto", "", font_path)
+    pdf.add_font("Noto", "B", font_path)
+
+
+def build_pdf_report(
+    stock_id: str,
+    advice: dict,
+    sections: dict,
+    *,
+    chart_png_bytes: bytes | None = None,
+    data_errors: list[str] | None = None,
+) -> bytes:
+    """由分析結果產生 PDF 報告"""
+    chart_file: Path | None = None
+    try:
+        chart_img_html = ""
+        if chart_png_bytes:
+            tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+            tmp.write(chart_png_bytes)
+            tmp.close()
+            chart_file = Path(tmp.name)
+            chart_img_html = f'<img src="{chart_file.resolve().as_uri()}" width="700" alt="K 線圖">'
+
+        html_body = _build_report_body_html(
+            stock_id,
+            advice,
+            sections,
+            chart_img_html=chart_img_html,
+            data_errors=data_errors,
+        )
+
+        pdf = FPDF(orientation="P", unit="mm", format="A4")
+        pdf.set_auto_page_break(auto=True, margin=15)
+        _register_noto_font(pdf)
+        pdf.set_font("Noto", "", 10)
+        pdf.add_page()
+        pdf.write_html(html_body)
+        return bytes(pdf.output())
+    finally:
+        if chart_file:
+            chart_file.unlink(missing_ok=True)
+
+
+def export_pdf_report(
     path: Path,
     stock_id: str,
     advice: dict,
@@ -307,14 +307,15 @@ def export_html_report(
     chart_png_bytes: bytes | None = None,
     data_errors: list[str] | None = None,
 ) -> Path:
-    """寫入 HTML 報告檔"""
-    html_text = build_html_report(
-        stock_id,
-        advice,
-        sections,
-        chart_png_bytes=chart_png_bytes,
-        data_errors=data_errors,
-    )
+    """寫入 PDF 報告檔"""
     path = Path(path)
-    path.write_text(html_text, encoding="utf-8")
+    path.write_bytes(
+        build_pdf_report(
+            stock_id,
+            advice,
+            sections,
+            chart_png_bytes=chart_png_bytes,
+            data_errors=data_errors,
+        )
+    )
     return path

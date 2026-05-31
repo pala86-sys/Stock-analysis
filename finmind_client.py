@@ -152,3 +152,29 @@ def request_finmind_stock_list() -> list[dict]:
 
     assert last_error is not None
     raise last_error
+
+
+def request_finmind_delisted_stock_ids() -> set[str]:
+    """取得已下市櫃股票代號"""
+    params = {"dataset": "TaiwanStockDelisting", "data_id": ""}
+    max_retries = 2
+    last_error: Exception | None = None
+
+    for attempt in range(max_retries):
+        try:
+            data = _request_once(params, timeout=60)
+            ids: set[str] = set()
+            for item in data or []:
+                stock_id = str(item.get("stock_id", "")).strip()
+                if stock_id:
+                    ids.add(stock_id)
+            return ids
+        except FinMindApiError:
+            raise
+        except requests.RequestException as exc:
+            last_error = exc
+            if attempt < max_retries - 1:
+                time.sleep(1.5 ** attempt)
+
+    assert last_error is not None
+    raise last_error

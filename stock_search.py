@@ -6,13 +6,34 @@ import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from finmind_client import request_finmind_stock_list
+from finmind_client import request_finmind_delisted_stock_ids, request_finmind_stock_list
 from settings import _settings_dir, resource_path
 
 STOCK_LIST_CACHE = _settings_dir() / "stock_list_cache.json"
 BUNDLED_STOCK_LIST = resource_path("data/stock_list.json")
+BUNDLED_DELISTED_IDS = resource_path("data/delisted_stock_ids.json")
 CACHE_MAX_AGE_DAYS = 7
 MARKET_LABEL = {"twse": "上市", "tpex": "上櫃"}
+
+
+def load_delisted_stock_ids() -> set[str]:
+    """載入內建下市櫃代號（供離線過濾舊快取）"""
+    if not BUNDLED_DELISTED_IDS.exists():
+        return set()
+    try:
+        payload = json.loads(BUNDLED_DELISTED_IDS.read_text(encoding="utf-8"))
+        return {str(x).strip() for x in (payload.get("stock_ids") or []) if str(x).strip()}
+    except Exception:
+        return set()
+
+
+def filter_active_stocks(stocks: list[dict], delisted_ids: set[str] | None = None) -> list[dict]:
+    """排除已下市櫃股票"""
+    if delisted_ids is None:
+        delisted_ids = load_delisted_stock_ids()
+    if not delisted_ids:
+        return stocks
+    return [s for s in stocks if str(s.get("stock_id", "")) not in delisted_ids]
 
 
 def _parse_stock_list_payload(payload: dict) -> list[dict]:
@@ -35,7 +56,12 @@ def fetch_stock_list_from_api() -> list[dict]:
             }
     if not seen:
         raise RuntimeError("無法取得股票清單")
-    return sorted(seen.values(), key=lambda x: x["stock_id"])
+    stocks = sorted(seen.values(), key=lambda x: x["stock_id"])
+    try:
+        delisted_ids = request_finmind_delisted_stock_ids()
+    except Exception:
+        delisted_ids = load_delisted_stock_ids()
+    return filter_active_stocks(stocks, delisted_ids)
 
 
 def lookup_bundled_stock(stock_id: str) -> dict | None:
@@ -55,7 +81,7 @@ def load_bundled_stock_list() -> list[dict]:
         return []
     try:
         payload = json.loads(BUNDLED_STOCK_LIST.read_text(encoding="utf-8"))
-        return _parse_stock_list_payload(payload)
+        return filter_active_stocks(_parse_stock_list_payload(payload))
     except Exception:
         return []
 
@@ -93,7 +119,7 @@ def load_stock_list(force_refresh: bool = False) -> list[dict]:
     if not force_refresh:
         cached_stocks, updated = _read_user_cache()
         if cached_stocks and _cache_is_fresh(updated):
-            return cached_stocks
+            return filter_active_stocks(cached_stocks)
 
         bundled = load_bundled_stock_list()
         if bundled:

@@ -4,12 +4,12 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from web_service import (
-    build_report_html,
+    build_report_pdf,
     get_stock_suggestions,
     resolve_stock,
     run_analysis,
@@ -74,10 +74,11 @@ def api_report(body: AnalyzeRequest):
 
     try:
         result = run_analysis(stock_id, display_days=body.display_days)
-        html = build_report_html(stock_id, result)
-        filename = f"{stock_id}_report.html"
-        return HTMLResponse(
-            content=html,
+        pdf_bytes = build_report_pdf(stock_id, result)
+        filename = f"{stock_id}_report.pdf"
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
     except Exception as exc:

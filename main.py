@@ -9,7 +9,7 @@ from charts import TechnicalChart
 from settings import load_last_stock, save_last_stock
 from widgets import AdviceTab, ChipsTab, FundamentalTab, ProfileTab, TabTable, configure_table_styles
 from advice import build_investment_advice
-from report_export import export_html_report
+from report_export import export_pdf_report
 from stock_search import preload_stock_list
 from stock_search_box import StockSearchBox
 
@@ -305,18 +305,18 @@ class StockApp:
         self.notebook.select(self.advice_tab.frame)
 
     def export_report(self):
-        """匯出 HTML 分析報告"""
+        """匯出 PDF 分析報告"""
         if not self._last_advice or not self._section_cache:
             messagebox.showwarning("提示", "請先完成股票分析再匯出報告。")
             return
 
         company = self._last_advice.get("顯示名稱") or self._last_advice.get("公司名稱") or self._current_stock_id
-        default_name = f"{self._current_stock_id}_{company}_報告.html".replace("/", "_")
+        default_name = f"{self._current_stock_id}_{company}_報告.pdf".replace("/", "_")
 
         path = filedialog.asksaveasfilename(
-            title="匯出 HTML 報告",
-            defaultextension=".html",
-            filetypes=[("HTML 報告", "*.html"), ("所有檔案", "*.*")],
+            title="匯出 PDF 報告",
+            defaultextension=".pdf",
+            filetypes=[("PDF 報告", "*.pdf"), ("所有檔案", "*.*")],
             initialfile=default_name,
         )
         if not path:
@@ -333,7 +333,7 @@ class StockApp:
                 tmp_path.unlink(missing_ok=True)
 
         try:
-            export_html_report(
+            export_pdf_report(
                 Path(path),
                 self._current_stock_id,
                 self._last_advice,
@@ -345,7 +345,7 @@ class StockApp:
             messagebox.showerror("匯出失敗", f"無法寫入報告：\n{exc}")
             return
 
-        if messagebox.askyesno("匯出完成", f"報告已儲存至：\n{path}\n\n是否用瀏覽器開啟？"):
+        if messagebox.askyesno("匯出完成", f"報告已儲存至：\n{path}\n\n是否開啟 PDF？"):
             webbrowser.open(Path(path).as_uri())
 
     def _on_analysis_failed(self, message: str, analysis_id: int | None = None):

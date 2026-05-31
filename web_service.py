@@ -8,7 +8,7 @@ import pandas as pd
 from advice import build_investment_advice
 from chart_render import render_chart_png
 from logic import StockAnalyzer
-from report_export import build_html_report
+from report_export import build_pdf_report
 from stock_search import format_stock_option, load_bundled_stock_list, resolve_stock_input, search_stocks
 
 
@@ -95,8 +95,8 @@ def run_analysis(stock_id: str, display_days: int = 90) -> dict:
     }
 
 
-def build_report_html(stock_id: str, result: dict) -> str:
-    """由分析結果產生 HTML 報告"""
+def build_report_pdf(stock_id: str, result: dict) -> bytes:
+    """由分析結果產生 PDF 報告"""
     chart_bytes = None
     if result.get("chart_base64"):
         chart_bytes = base64.b64decode(result["chart_base64"])
@@ -105,7 +105,7 @@ def build_report_html(stock_id: str, result: dict) -> str:
     if chart_bytes and "technical" in sections:
         sections["technical"] = dict(sections["technical"])
 
-    return build_html_report(
+    return build_pdf_report(
         stock_id,
         result.get("advice", {}),
         sections,

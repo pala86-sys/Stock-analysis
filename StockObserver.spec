@@ -16,6 +16,8 @@ hiddenimports = [
     "stock_search_box",
     "http_client",
     "report_export",
+    "fpdf",
+    "fpdf.html",
     "valuation",
 ]
 
@@ -25,6 +27,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ("data/stock_list.json", "data"),
+        ("data/delisted_stock_ids.json", "data"),
         ("assets/fonts/NotoSansTC-Regular.otf", "assets/fonts"),
     ],
     hiddenimports=hiddenimports,
