@@ -1,6 +1,7 @@
 __pycache__/
 *.py[cod]
 .build-venv/
+.venv/
 venv/
 .env
 build/
@@ -20,3 +21,4 @@ mobile/.gradle/
 build/
 dist/
 .build-venv/
+.venv/

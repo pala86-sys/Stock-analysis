@@ -6,7 +6,7 @@ services:
     name: stock-observer
     runtime: python
     plan: free
-    buildCommand: pip install --upgrade pip && pip install -r requirements-web.txt
+    buildCommand: bash build.sh
     startCommand: bash start.sh
     envVars:
       - key: PYTHON_VERSION
