@@ -5,7 +5,7 @@ import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 
-from finmind_client import request_finmind
+from finmind_client import FinMindApiError, finmind_quota_exhausted, request_finmind, reset_finmind_session
 from http_client import call_with_retry, request_with_retry
 from stock_search import lookup_bundled_stock
 
@@ -160,6 +160,7 @@ class StockDataSource:
     def _run_preload(self, on_ready=None):
         self._preload_in_progress = True
         self._errors.clear()
+        reset_finmind_session()
         self.resolve_symbol()
 
         end_date = datetime.now().strftime("%Y-%m-%d")
@@ -217,8 +218,17 @@ class StockDataSource:
                     _store(key, None, exc)
 
         for key, task in finmind_tasks.items():
+            if finmind_quota_exhausted():
+                _store(
+                    key,
+                    None,
+                    FinMindApiError("FinMind 配額用盡或 IP 暫封，已略過後續請求", status=402),
+                )
+                continue
             try:
                 _store(key, task())
+            except FinMindApiError as exc:
+                _store(key, None, exc)
             except Exception as exc:
                 _store(key, None, exc)
 

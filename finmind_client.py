@@ -1,15 +1,47 @@
-"""FinMind API 請求（Token、節流、重試）"""
+"""FinMind API 請求（Token、節流、避免 4xx 重試）"""
 
 import os
 import time
 
-from http_client import call_with_retry, request_with_retry
+import requests
+
+from http_client import get_http_session
 
 FINMIND_API = "https://api.finmindtrade.com/api/v4/data"
 _LAST_REQUEST_AT = 0.0
 # 無 Token 時 FinMind 每 IP 每小時僅 300 次，雲端共用 IP 需拉長間隔
 _MIN_INTERVAL = 0.4
 _MIN_INTERVAL_WITH_TOKEN = 0.12
+# 402 配額用盡 / 403 IP 封鎖：同一程序內不再打 FinMind
+_quota_exhausted = False
+
+
+class FinMindApiError(RuntimeError):
+    """FinMind 業務錯誤（含 status / HTTP status）"""
+
+    def __init__(self, message: str, *, status: int | None = None, http_status: int | None = None):
+        super().__init__(message)
+        self.status = status
+        self.http_status = http_status
+
+    @property
+    def is_quota_or_ban(self) -> bool:
+        if self.http_status in (402, 403):
+            return True
+        if self.status in (402, 403):
+            return True
+        lowered = str(self).lower()
+        return "upper limit" in lowered or "ip banned" in lowered
+
+
+def finmind_quota_exhausted() -> bool:
+    return _quota_exhausted
+
+
+def reset_finmind_session() -> None:
+    """新一輪分析開始時重置（同一輪內仍會在遇到 402/403 後熔斷）"""
+    global _quota_exhausted
+    _quota_exhausted = False
 
 
 def finmind_token() -> str:
@@ -33,44 +65,90 @@ def _throttle() -> None:
     _LAST_REQUEST_AT = time.monotonic()
 
 
-def request_finmind(stock_code: str, dataset: str, extra_params: dict) -> list | None:
-    """發送 FinMind API 請求（含重試）"""
-    params = {"dataset": dataset, "data_id": stock_code, **extra_params}
+def _parse_finmind_response(response: requests.Response) -> list | None:
+    global _quota_exhausted
 
-    def _fetch():
-        _throttle()
-        response = request_with_retry(
-            "GET",
-            FINMIND_API,
-            params=params,
-            headers=finmind_headers(),
-            timeout=30,
-        )
+    http_status = response.status_code
+    try:
         payload = response.json()
-        status = payload.get("status")
-        if status != 200:
-            msg = payload.get("msg") or f"HTTP status={status}"
-            raise RuntimeError(str(msg))
-        return payload.get("data") or None
+    except ValueError:
+        payload = {}
 
-    retries = 2 if finmind_token() else 3
-    return call_with_retry(_fetch, max_retries=retries)
+    api_status = payload.get("status")
+    msg = str(payload.get("msg") or f"HTTP {http_status}")
+
+    if http_status in (401, 402, 403) or api_status in (401, 402, 403):
+        if http_status in (402, 403) or api_status in (402, 403):
+            _quota_exhausted = True
+        raise FinMindApiError(
+            msg,
+            status=api_status if isinstance(api_status, int) else None,
+            http_status=http_status,
+        )
+
+    response.raise_for_status()
+
+    if api_status != 200:
+        raise FinMindApiError(
+            msg,
+            status=api_status if isinstance(api_status, int) else None,
+            http_status=http_status,
+        )
+
+    return payload.get("data") or None
+
+
+def _request_once(params: dict, *, timeout: int) -> list | None:
+    if _quota_exhausted:
+        raise FinMindApiError("FinMind 配額用盡或 IP 暫封，已略過本次請求", status=402)
+
+    _throttle()
+    session = get_http_session()
+    response = session.get(
+        FINMIND_API,
+        params=params,
+        headers=finmind_headers(),
+        timeout=timeout,
+    )
+    return _parse_finmind_response(response)
+
+
+def request_finmind(stock_code: str, dataset: str, extra_params: dict) -> list | None:
+    """發送 FinMind API 請求（僅對網路/5xx 重試，402/403 不重試）"""
+    params = {"dataset": dataset, "data_id": stock_code, **extra_params}
+    max_retries = 2
+    last_error: Exception | None = None
+
+    for attempt in range(max_retries):
+        try:
+            return _request_once(params, timeout=30)
+        except FinMindApiError:
+            raise
+        except requests.RequestException as exc:
+            last_error = exc
+            if attempt < max_retries - 1:
+                time.sleep(1.5 ** attempt)
+
+    assert last_error is not None
+    raise last_error
 
 
 def request_finmind_stock_list() -> list[dict]:
     """取得全部台股清單"""
-    def _fetch():
-        _throttle()
-        response = request_with_retry(
-            "GET",
-            FINMIND_API,
-            params={"dataset": "TaiwanStockInfo", "data_id": ""},
-            headers=finmind_headers(),
-            timeout=60,
-        )
-        payload = response.json()
-        if payload.get("status") != 200:
-            raise RuntimeError(payload.get("msg") or "無法取得股票清單")
-        return payload.get("data") or []
+    params = {"dataset": "TaiwanStockInfo", "data_id": ""}
+    max_retries = 2
+    last_error: Exception | None = None
 
-    return call_with_retry(_fetch)
+    for attempt in range(max_retries):
+        try:
+            data = _request_once(params, timeout=60)
+            return data or []
+        except FinMindApiError:
+            raise
+        except requests.RequestException as exc:
+            last_error = exc
+            if attempt < max_retries - 1:
+                time.sleep(1.5 ** attempt)
+
+    assert last_error is not None
+    raise last_error
