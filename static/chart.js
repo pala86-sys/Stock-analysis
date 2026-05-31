@@ -234,7 +234,7 @@
     function draw() {
       const bars = visibleBars();
       if (!bars.length) return;
-      const { ctx, w, panels, padL, plotW } = layout();
+      const { ctx, w, h, panels, padL, plotW } = layout();
       const idx = activeIndex();
       const crossX =
         probeEnabled && hoverIndex >= 0
