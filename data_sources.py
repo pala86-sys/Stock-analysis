@@ -5,7 +5,9 @@ import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 
+from finmind_client import request_finmind
 from http_client import call_with_retry, request_with_retry
+from stock_search import lookup_bundled_stock
 
 FINMIND_API = "https://api.finmindtrade.com/api/v4/data"
 MARKET_SUFFIX = {"twse": ".TW", "tpex": ".TWO"}
@@ -23,20 +25,6 @@ SOURCE_LABELS = {
     "finmind_financial": "FinMind 財報",
     "stock_info": "FinMind 股號",
 }
-
-
-def request_finmind(stock_code: str, dataset: str, extra_params: dict) -> list | None:
-    """發送 FinMind API 請求（含重試）"""
-    params = {"dataset": dataset, "data_id": stock_code, **extra_params}
-
-    def _fetch():
-        response = request_with_retry("GET", FINMIND_API, params=params, timeout=30)
-        payload = response.json()
-        if payload.get("status") != 200:
-            return None
-        return payload.get("data") or None
-
-    return call_with_retry(_fetch)
 
 
 def empty_cache_value(key: str):
@@ -85,7 +73,15 @@ class StockDataSource:
         return dict(self._errors)
 
     def get_error_summary(self) -> list[str]:
-        return [SOURCE_LABELS.get(key, key) for key in self._errors]
+        lines = []
+        for key, err in self._errors.items():
+            label = SOURCE_LABELS.get(key, key)
+            detail = str(err).strip()
+            if detail:
+                lines.append(f"{label}：{detail[:120]}")
+            else:
+                lines.append(label)
+        return lines
 
     def resolve_symbol(self):
         """依 FinMind 判斷上市 (.TW) 或上櫃 (.TWO) 並建立 yfinance Ticker"""
@@ -95,7 +91,10 @@ class StockDataSource:
             return
 
         stock_info = self.fetch_stock_info()
-        market = (stock_info or {}).get("type", "twse")
+        market = (stock_info or {}).get("type")
+        if not market:
+            bundled = lookup_bundled_stock(self.stock_code) or {}
+            market = bundled.get("market", "twse")
         self.market_type = market
         suffix = MARKET_SUFFIX.get(market, ".TW")
         self.stock_symbol = f"{self.stock_code}{suffix}"
@@ -171,10 +170,12 @@ class StockDataSource:
         financial_start = (datetime.now() - timedelta(days=365 * 4)).strftime("%Y-%m-%d")
         stock_code = self.stock_code
 
-        futures_map = {
+        yahoo_tasks = {
             "info": self._fetch_yfinance_info,
             "history": self._fetch_yfinance_history,
             "news": self._fetch_yfinance_news,
+        }
+        finmind_tasks = {
             "finmind_per": lambda: request_finmind(
                 stock_code, "TaiwanStockPER", {"start_date": per_start}
             ),
@@ -197,17 +198,29 @@ class StockDataSource:
             ),
         }
 
-        with ThreadPoolExecutor(max_workers=9) as executor:
-            futures = {key: executor.submit(task) for key, task in futures_map.items()}
+        def _store(key: str, value, exc: Exception | None = None):
+            if exc is not None:
+                self._cache[key] = empty_cache_value(key)
+                self._errors[key] = str(exc)
+            else:
+                self._cache[key] = value
+            if on_ready:
+                on_ready(key)
+
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {key: executor.submit(task) for key, task in yahoo_tasks.items()}
             for future in as_completed(futures.values()):
                 key = next(k for k, f in futures.items() if f is future)
                 try:
-                    self._cache[key] = future.result()
+                    _store(key, future.result())
                 except Exception as exc:
-                    self._cache[key] = empty_cache_value(key)
-                    self._errors[key] = str(exc)
-                if on_ready:
-                    on_ready(key)
+                    _store(key, None, exc)
+
+        for key, task in finmind_tasks.items():
+            try:
+                _store(key, task())
+            except Exception as exc:
+                _store(key, None, exc)
 
         self._preloaded = True
         self._preload_in_progress = False

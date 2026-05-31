@@ -49,7 +49,22 @@ git push -u origin main
 
 部署完成後會得到網址，例如：`https://stock-observer.onrender.com`
 
-### 3. 注意事項
+### 3. 設定 FinMind Token（Web 版強烈建議）
+
+Render 等雲端主機與本機共用 FinMind 免費配額（無 Token 約 **300 次/小時/IP**），容易出現籌碼、月營收、EPS 抓不到。
+
+1. 至 [FinMind 官網](https://finmindtrade.com/) 註冊並取得 API Token  
+2. Render Dashboard → 你的服務 → **Environment** → 新增：
+
+   | Key | Value |
+   |-----|-------|
+   | `FINMIND_TOKEN` | 你的 Token |
+
+3. 儲存後重新部署
+
+有 Token 後配額提升為 **600 次/小時**，並降低被限流機率。
+
+### 4. 其他注意事項
 
 - **免費方案** 閒置 15 分鐘會休眠，首次開啟需等待約 30～60 秒喚醒
 - **分析耗時** 每次約 10～30 秒（需呼叫 FinMind + Yahoo API）

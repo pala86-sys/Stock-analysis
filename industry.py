@@ -171,11 +171,14 @@ def resolve_company_names(
     info: dict | None = None,
 ) -> dict:
     """解析公司顯示名稱：中文名優先，附代號與英文名"""
+    from stock_search import lookup_bundled_stock
+
     stock_info = stock_info or {}
     info = info or {}
-    chinese = str(stock_info.get("stock_name") or "").strip()
-    english = str(info.get("longName") or info.get("shortName") or "").strip()
     code = str(stock_code or "").strip()
+    bundled = lookup_bundled_stock(code) or {}
+    chinese = str(stock_info.get("stock_name") or bundled.get("stock_name") or "").strip()
+    english = str(info.get("longName") or info.get("shortName") or "").strip()
 
     primary = chinese or english or code
     if chinese and code:

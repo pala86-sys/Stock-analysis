@@ -6,10 +6,9 @@ import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from http_client import request_with_retry
+from finmind_client import request_finmind_stock_list
 from settings import _settings_dir, resource_path
 
-FINMIND_API = "https://api.finmindtrade.com/api/v4/data"
 STOCK_LIST_CACHE = _settings_dir() / "stock_list_cache.json"
 BUNDLED_STOCK_LIST = resource_path("data/stock_list.json")
 CACHE_MAX_AGE_DAYS = 7
@@ -22,18 +21,8 @@ def _parse_stock_list_payload(payload: dict) -> list[dict]:
 
 def fetch_stock_list_from_api() -> list[dict]:
     """從 FinMind 取得全部台股清單"""
-    response = request_with_retry(
-        "GET",
-        FINMIND_API,
-        params={"dataset": "TaiwanStockInfo", "data_id": ""},
-        timeout=60,
-    )
-    payload = response.json()
-    if payload.get("status") != 200:
-        raise RuntimeError("無法取得股票清單")
-
     seen: dict[str, dict] = {}
-    for item in payload.get("data") or []:
+    for item in request_finmind_stock_list():
         stock_id = str(item.get("stock_id", "")).strip()
         stock_name = str(item.get("stock_name", "")).strip()
         if not stock_id or not stock_name:
@@ -44,7 +33,20 @@ def fetch_stock_list_from_api() -> list[dict]:
                 "stock_name": stock_name,
                 "market": item.get("type", "twse"),
             }
+    if not seen:
+        raise RuntimeError("無法取得股票清單")
     return sorted(seen.values(), key=lambda x: x["stock_id"])
+
+
+def lookup_bundled_stock(stock_id: str) -> dict | None:
+    """從內建股號清單查詢中文名稱與市場別"""
+    code = str(stock_id or "").strip()
+    if not code:
+        return None
+    for stock in load_bundled_stock_list():
+        if stock.get("stock_id") == code:
+            return stock
+    return None
 
 
 def load_bundled_stock_list() -> list[dict]:

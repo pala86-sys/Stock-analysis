@@ -11,4 +11,6 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.9"
+      - key: FINMIND_TOKEN
+        sync: false
     healthCheckPath: /api/health
