@@ -1,6 +1,7 @@
 """台股多維度全方位觀測儀 — Web 版（FastAPI + Render）"""
 
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
