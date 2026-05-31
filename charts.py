@@ -46,7 +46,7 @@ class TechnicalChart:
         self.probe_btn = None
         self.period_btns: dict[int, tk.Button] = {}
 
-        self.probe_mode = False
+        self.probe_mode = True
         self.full_df = None
         self.df = None
         self.display_days = 90
@@ -69,7 +69,7 @@ class TechnicalChart:
         toolbar.pack(fill="x", padx=8, pady=(6, 0))
 
         tk.Label(
-            toolbar, text="滑鼠左右移動可查看當日價格",
+            toolbar, text="滑鼠在圖上左右移動可查看當日價格（按「查價」可關閉）",
             font=("Microsoft JhengHei", 9), bg=self.BG, fg="#888888",
         ).pack(side="left")
 
@@ -184,6 +184,9 @@ class TechnicalChart:
         self.display_days = min(display_days, len(full_df))
 
         self.clear()
+        self.probe_mode = True
+        if self.probe_btn:
+            self.probe_btn.config(bg="#0071E3", fg="#ffffff")
         self._update_period_buttons()
         self._setup_figure()
         self._draw_chart()

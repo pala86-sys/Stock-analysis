@@ -409,16 +409,31 @@ function renderTechnical(t, chartB64) {
   (lv.supports || []).forEach((p, i) => srRows.push([`支撐 ${i + 1}`, p]));
   (lv.resistances || []).forEach((p, i) => srRows.push([`壓力 ${i + 1}`, p]));
 
-  const chartBlock = chartB64
-    ? `<img class="chart-img" src="data:image/png;base64,${chartB64}" alt="K線圖">`
-    : '<p class="panel-muted">無法產生 K 線圖</p>';
+  const hasBars = Array.isArray(t.bars) && t.bars.length > 0;
+  const chartBlock = hasBars
+    ? '<div id="tech-chart-host" class="chart-interactive-wrap"></div>'
+    : chartB64
+      ? `<img class="chart-img" src="data:image/png;base64,${chartB64}" alt="K線圖">`
+      : '<p class="panel-muted">無法產生 K 線圖</p>';
 
   $("#panel-technical").innerHTML = panelPage(`
-    ${panelHeader("技術面分析", "均線 · KD · MACD · 支撐壓力")}
+    ${panelHeader("技術面分析", "均線 · KD · MACD · 支撐壓力 · 查價")}
     ${panelSection("技術摘要", table(["指標", "數值"], sumRows))}
     ${panelSection("支撐 / 壓力", table(["價位", "數值"], srRows))}
     ${panelSection("K 線圖", chartBlock)}
   `);
+
+  if (hasBars && window.StockInteractiveChart) {
+    const host = document.getElementById("tech-chart-host");
+    if (host) {
+      window.StockInteractiveChart.mount(host, {
+        bars: t.bars,
+        levels: t.levels || {},
+        stockName: t.stock_name || "",
+        displayDays: t.display_days || 90,
+      });
+    }
+  }
 }
 
 function renderChips(c) {

@@ -166,3 +166,43 @@ def render_chart_png(
     plt.close(figure)
     buf.seek(0)
     return buf.read()
+
+
+def _num(value) -> float | None:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    return round(float(value), 4)
+
+
+def serialize_chart_bars(full_df: pd.DataFrame, max_days: int = 180) -> list[dict]:
+    """將 K 線序列化供 Web 互動圖表 / 查價使用"""
+    if full_df is None or full_df.empty:
+        return []
+
+    df = full_df.tail(max_days)
+    rows: list[dict] = []
+    for idx, row in df.iterrows():
+        if hasattr(idx, "strftime"):
+            date_str = idx.strftime("%Y-%m-%d")
+        else:
+            date_str = str(idx)[:10]
+        rows.append(
+            {
+                "date": date_str,
+                "open": _num(row.get("Open")),
+                "high": _num(row.get("High")),
+                "low": _num(row.get("Low")),
+                "close": _num(row.get("Close")),
+                "volume": _num(row.get("Volume")),
+                "MA5": _num(row.get("MA5")),
+                "MA10": _num(row.get("MA10")),
+                "MA20": _num(row.get("MA20")),
+                "MA60": _num(row.get("MA60")),
+                "K": _num(row.get("K")),
+                "D": _num(row.get("D")),
+                "DIF": _num(row.get("DIF")),
+                "DEA": _num(row.get("DEA")),
+                "MACD_hist": _num(row.get("MACD_hist")),
+            }
+        )
+    return rows

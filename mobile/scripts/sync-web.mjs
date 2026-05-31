@@ -9,7 +9,7 @@ const staticDir = path.join(projectRoot, "static");
 const wwwDir = path.join(mobileRoot, "www");
 
 const apiUrl = (process.env.STOCK_OBSERVER_API || "").trim().replace(/\/$/, "");
-const files = ["index.html", "app.css", "app.js"];
+const files = ["index.html", "app.css", "app.js", "chart.js"];
 
 if (!apiUrl) {
   console.error("ERROR: 請設定 STOCK_OBSERVER_API（Render 或自建後端網址）");

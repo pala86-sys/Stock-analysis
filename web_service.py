@@ -6,7 +6,7 @@ from typing import Any
 import pandas as pd
 
 from advice import build_investment_advice
-from chart_render import render_chart_png
+from chart_render import render_chart_png, serialize_chart_bars
 from logic import StockAnalyzer
 from report_export import build_pdf_report
 from stock_search import format_stock_option, load_bundled_stock_list, resolve_stock_input, search_stocks
@@ -24,14 +24,21 @@ def _json_safe(value: Any) -> Any:
     return str(value)
 
 
-def _prepare_technical(technical: dict) -> dict:
+def _prepare_technical(technical: dict, display_days: int = 90) -> dict:
     if "error" in technical:
         return {"error": technical["error"]}
+
+    full_data = technical.get("full_data")
+    bars: list[dict] = []
+    if full_data is not None and not getattr(full_data, "empty", True):
+        bars = serialize_chart_bars(full_data, max_days=180)
+
     return {
         "summary": _json_safe(technical.get("summary", {})),
         "levels": _json_safe(technical.get("levels", {})),
         "stock_name": technical.get("stock_name", ""),
-        "display_days": technical.get("display_days", 90),
+        "display_days": min(display_days, len(bars)) if bars else display_days,
+        "bars": bars,
     }
 
 
@@ -69,6 +76,9 @@ def run_analysis(stock_id: str, display_days: int = 90) -> dict:
     )
 
     technical_raw = sections.get("technical", {})
+    if "error" not in technical_raw:
+        technical_raw = analyzer.get_technical_chart_data(display_days=display_days)
+
     chart_b64 = None
     if "error" not in technical_raw and technical_raw.get("full_data") is not None:
         png = render_chart_png(
@@ -87,7 +97,7 @@ def run_analysis(stock_id: str, display_days: int = 90) -> dict:
         "sections": {
             "profile": _json_safe(sections.get("profile", {})),
             "fundamental": _json_safe(sections.get("fundamental", {})),
-            "technical": _prepare_technical(technical_raw),
+            "technical": _prepare_technical(technical_raw, display_days),
             "chips": _json_safe(sections.get("chips", {})),
             "news": _json_safe(sections.get("news", [])),
         },
