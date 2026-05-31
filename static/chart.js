@@ -52,6 +52,53 @@
     return { supports, resistances, period_high: periodHigh, period_low: periodLow };
   }
 
+  function resolveLabelOverlap(items, minGap, minY, maxY) {
+    if (items.length <= 1) return items;
+    const sorted = items.map((item) => ({ ...item }));
+    sorted.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i].y - sorted[i - 1].y < minGap) {
+        sorted[i].y = sorted[i - 1].y + minGap;
+      }
+    }
+    const overflow = sorted[sorted.length - 1].y - maxY;
+    if (overflow > 0) {
+      for (let i = 0; i < sorted.length; i++) sorted[i].y -= overflow;
+    }
+    const under = minY - sorted[0].y;
+    if (under > 0) {
+      for (let i = 0; i < sorted.length; i++) sorted[i].y += under;
+    }
+    return sorted;
+  }
+
+  function drawLevelLabels(ctx, items, panel, padL, plotW, defaultSide) {
+    if (!items.length) return;
+    const minGap = 13;
+    const minY = panel.y + 10;
+    const maxY = panel.y + panel.h - 4;
+    const placed = items.map((item) => ({ ...item, side: defaultSide }));
+
+    if (placed.length === 2 && Math.abs(placed[0].y - placed[1].y) < minGap) {
+      placed[0].side = defaultSide;
+      placed[1].side = defaultSide === "left" ? "right" : "left";
+    } else {
+      const resolved = resolveLabelOverlap(placed, minGap, minY, maxY);
+      placed.splice(0, placed.length, ...resolved);
+    }
+
+    ctx.font = "10px sans-serif";
+    placed.forEach((item) => {
+      ctx.fillStyle = item.color;
+      ctx.textAlign = item.side === "right" ? "right" : "left";
+      ctx.textBaseline = "middle";
+      const x = item.side === "right" ? padL + plotW - 4 : padL + 4;
+      ctx.fillText(item.text, x, item.y);
+    });
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+  }
+
   function mount(container, options) {
     const allBars = options.bars || [];
     if (!allBars.length) return null;
@@ -314,17 +361,24 @@
       (levels.supports || []).forEach((s, i) => {
         const y = yScale(pMin, pMax, pricePanel.y, pricePanel.h, s);
         drawHLine(ctx, y, padL, padL + plotW, DOWN, [4, 3]);
-        ctx.fillStyle = DOWN;
-        ctx.font = "10px sans-serif";
-        ctx.fillText(`支撐${i + 1} ${fmt(s)}`, padL + 2, y - 2);
       });
       (levels.resistances || []).forEach((r, i) => {
         const y = yScale(pMin, pMax, pricePanel.y, pricePanel.h, r);
         drawHLine(ctx, y, padL, padL + plotW, UP, [4, 3]);
-        ctx.fillStyle = UP;
-        ctx.font = "10px sans-serif";
-        ctx.fillText(`壓力${i + 1} ${fmt(r)}`, padL + plotW - 72, y - 2);
       });
+
+      const supportLabels = (levels.supports || []).map((s, i) => ({
+        y: yScale(pMin, pMax, pricePanel.y, pricePanel.h, s),
+        text: `支撐${i + 1} ${fmt(s)}`,
+        color: DOWN,
+      }));
+      const resistanceLabels = (levels.resistances || []).map((r, i) => ({
+        y: yScale(pMin, pMax, pricePanel.y, pricePanel.h, r),
+        text: `壓力${i + 1} ${fmt(r)}`,
+        color: UP,
+      }));
+      drawLevelLabels(ctx, supportLabels, pricePanel, padL, plotW, "left");
+      drawLevelLabels(ctx, resistanceLabels, pricePanel, padL, plotW, "right");
 
       const volMax = Math.max(...bars.map((b) => b.volume || 0), 1);
       bars.forEach((b, i) => {
@@ -395,8 +449,12 @@
 
       ctx.fillStyle = TEXT;
       ctx.font = "10px sans-serif";
-      ctx.fillText(fmt(pMax), 4, pricePanel.y + 10);
-      ctx.fillText(fmt(pMin), 4, pricePanel.y + pricePanel.h);
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      ctx.fillText(fmt(pMax), padL - 6, pricePanel.y + 10);
+      ctx.fillText(fmt(pMin), padL - 6, pricePanel.y + pricePanel.h - 4);
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
 
       if (crossX != null) {
         ctx.strokeStyle = CROSS;
