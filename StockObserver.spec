@@ -29,6 +29,7 @@ a = Analysis(
         ("data/stock_list.json", "data"),
         ("data/delisted_stock_ids.json", "data"),
         ("assets/fonts/NotoSansTC-Regular.otf", "assets/fonts"),
+        ("assets/fonts/NotoSansTC-Regular.ttf", "assets/fonts"),
     ],
     hiddenimports=hiddenimports,
     hookspath=[],

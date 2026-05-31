@@ -15,7 +15,7 @@ from fpdf.html import DEFAULT_TAG_STYLES
 from settings import resource_path
 
 FONT_FAMILY = "noto"
-NOTO_FONT_REL = "assets/fonts/NotoSansTC-Regular.otf"
+NOTO_FONT_REL = "assets/fonts/NotoSansTC-Regular.ttf"
 _resolved_font_path: Path | None = None
 
 
@@ -223,6 +223,11 @@ def _build_report_body_html(
     """組裝報告 HTML 內容（供 PDF 轉換）"""
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
     company = advice.get("顯示名稱") or advice.get("公司名稱") or stock_id
+    sid = str(stock_id).strip()
+    if sid and sid not in str(company):
+        title = f"{company}（{sid}）"
+    else:
+        title = company
 
     warn_html = ""
     if data_errors:
@@ -240,7 +245,7 @@ def _build_report_body_html(
         body_sections.insert(4, _section("K 線圖", chart_img_html))
 
     return f"""
-    <h1>{_esc(company)}（{_esc(stock_id)}）</h1>
+    <h1>{_esc(title)}</h1>
     <p>台股多維度全方位觀測儀 · 報告產生時間 {generated_at}</p>
     {warn_html}
     {"".join(body_sections)}
@@ -255,10 +260,13 @@ def _noto_font_path() -> Path:
 
     src = resource_path(NOTO_FONT_REL)
     if not src.exists():
-        raise FileNotFoundError(f"找不到報告用字型：{src}")
+        raise FileNotFoundError(
+            f"找不到 PDF 用 TTF 字型：{src}。"
+            "請執行 python scripts/ensure_fonts.py 下載 NotoSansTC-Regular.ttf"
+        )
 
     if getattr(sys, "frozen", False):
-        dest = Path(tempfile.gettempdir()) / "StockObserver_NotoSansTC-Regular.otf"
+        dest = Path(tempfile.gettempdir()) / "StockObserver_NotoSansTC-Regular.ttf"
         if not dest.exists() or dest.stat().st_size != src.stat().st_size:
             shutil.copyfile(src, dest)
         _resolved_font_path = dest

@@ -23,6 +23,9 @@ Write-Host "==> 安裝執行與打包依賴..."
 Write-Host "==> 匯出內建股號清單..."
 & $python scripts/export_stock_list.py
 
+Write-Host "==> 確認中文字型（PDF 用 TTF）..."
+& $python scripts/ensure_fonts.py
+
 Write-Host "==> 清理舊的 build 產物..."
 if (Test-Path $distPath) { Remove-Item $distPath -Recurse -Force }
 if (Test-Path $buildPath) { Remove-Item $buildPath -Recurse -Force }
