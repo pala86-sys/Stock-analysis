@@ -124,5 +124,10 @@ def config_js():
     return _static_file("config.js", "application/javascript")
 
 
+@app.get("/chart.js")
+def chart_js():
+    return _static_file("chart.js", "application/javascript")
+
+
 if STATIC.exists():
     app.mount("/assets", StaticFiles(directory=STATIC), name="assets")

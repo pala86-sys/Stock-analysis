@@ -168,8 +168,16 @@
       `;
     }
 
+    function measureWidth() {
+      const cw = canvasWrap.clientWidth;
+      if (cw > 0) return cw;
+      const panel = container.closest(".panel");
+      if (panel && panel.clientWidth > 0) return panel.clientWidth - 40;
+      return Math.min(window.innerWidth - 48, 960);
+    }
+
     function layout() {
-      const w = Math.max(canvasWrap.clientWidth, 320);
+      const w = measureWidth();
       const h = Math.min(Math.round(w * 0.72), 560);
       const dpr = window.devicePixelRatio || 1;
       canvas.width = Math.round(w * dpr);
@@ -448,6 +456,7 @@
     }
 
     return {
+      redraw: draw,
       destroy() {
         if (resizeObserver) resizeObserver.disconnect();
         container.innerHTML = "";

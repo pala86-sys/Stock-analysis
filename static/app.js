@@ -21,6 +21,7 @@ let selectedStockId = "";
 let lastPayload = null;
 let lastAdvice = null;
 let debounceTimer = null;
+let techChartInstance = null;
 
 function esc(s) {
   const d = document.createElement("div");
@@ -51,6 +52,9 @@ function showPanel(name) {
   });
   if (tabSelect && tabSelect.value !== name) {
     tabSelect.value = name;
+  }
+  if (name === "technical" && techChartInstance?.redraw) {
+    requestAnimationFrame(() => techChartInstance.redraw());
   }
 }
 
@@ -409,6 +413,9 @@ function renderTechnical(t, chartB64) {
   (lv.supports || []).forEach((p, i) => srRows.push([`支撐 ${i + 1}`, p]));
   (lv.resistances || []).forEach((p, i) => srRows.push([`壓力 ${i + 1}`, p]));
 
+  if (techChartInstance?.destroy) techChartInstance.destroy();
+  techChartInstance = null;
+
   const hasBars = Array.isArray(t.bars) && t.bars.length > 0;
   const chartBlock = hasBars
     ? '<div id="tech-chart-host" class="chart-interactive-wrap"></div>'
@@ -423,16 +430,16 @@ function renderTechnical(t, chartB64) {
     ${panelSection("K 線圖", chartBlock)}
   `);
 
-  if (hasBars && window.StockInteractiveChart) {
-    const host = document.getElementById("tech-chart-host");
-    if (host) {
-      window.StockInteractiveChart.mount(host, {
-        bars: t.bars,
-        levels: t.levels || {},
-        stockName: t.stock_name || "",
-        displayDays: t.display_days || 90,
-      });
-    }
+  const host = document.getElementById("tech-chart-host");
+  if (hasBars && window.StockInteractiveChart && host) {
+    techChartInstance = window.StockInteractiveChart.mount(host, {
+      bars: t.bars,
+      levels: t.levels || {},
+      stockName: t.stock_name || "",
+      displayDays: t.display_days || 90,
+    });
+  } else if (chartB64 && host) {
+    host.innerHTML = `<img class="chart-img" src="data:image/png;base64,${chartB64}" alt="K線圖">`;
   }
 }
 
