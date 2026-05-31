@@ -139,13 +139,55 @@ def _get_styles() -> dict[str, ParagraphStyle]:
             leading=11,
             wordWrap="CJK",
         ),
+        "tableheader": ParagraphStyle(
+            "tableheader",
+            fontName=FONT_BOLD,
+            fontSize=8,
+            leading=11,
+            wordWrap="CJK",
+            textColor=colors.HexColor("#333333"),
+        ),
     }
     return _styles
 
 
-def _cell_para(text: str) -> Paragraph:
+def _cell_para(text: str, *, header: bool = False) -> Paragraph:
     styles = _get_styles()
-    return Paragraph(escape(_text(text)), styles["tablecell"])
+    key = "tableheader" if header else "tablecell"
+    return Paragraph(escape(_text(text)), styles[key])
+
+
+def _default_col_widths(headers: list[str]) -> list[float]:
+    """依欄位語意分配欄寬，避免長文擠出表格"""
+    usable = 170 * mm
+    n = len(headers)
+    if n == 2:
+        return [42 * mm, usable - 42 * mm]
+    if n == 3:
+        h = headers
+        if h[0] in ("項目", "指標", "面向", "型態", "法人", "價位") and h[1] in (
+            "評語",
+            "說明",
+            "內容",
+            "數值",
+            "得分",
+            "近日連續買賣超",
+        ):
+            if h[1] in ("評語", "說明", "內容", "近日連續買賣超"):
+                return [24 * mm, usable - 24 * mm - 22 * mm, 22 * mm]
+            if h[1] == "得分":
+                return [24 * mm, 20 * mm, usable - 44 * mm]
+            return [24 * mm, 28 * mm, usable - 52 * mm]
+        return [usable * 0.24, usable * 0.22, usable * 0.54]
+    if n == 4:
+        if headers[0] == "期間":
+            return [34 * mm, 28 * mm, 28 * mm, usable - 90 * mm]
+        return [usable / n] * n
+    if n == 5 and headers[0] == "持有區間":
+        return [34 * mm, 24 * mm, 24 * mm, 28 * mm, usable - 110 * mm]
+    if n == 5 and headers[0] == "日期":
+        return [30 * mm, 28 * mm, 28 * mm, 28 * mm, usable - 114 * mm]
+    return [usable / n] * n if n else [usable]
 
 
 def _para(text: str, style_key: str = "body") -> Paragraph:
@@ -163,32 +205,32 @@ def _table(
     if not rows:
         return _para("無資料", "muted")
 
-    wrap_cols = wrap_cols or set()
-    data = [headers] + [[_text(c) for c in row] for row in rows]
+    if wrap_cols is None:
+        wrap_cols = set(range(len(headers)))
+
+    data: list[list] = [[_cell_para(h, header=True) for h in headers]]
+    for row in rows:
+        data.append([_text(c) for c in row])
     for row_idx in range(1, len(data)):
-        for col_idx in wrap_cols:
-            if col_idx < len(data[row_idx]):
+        for col_idx in range(len(data[row_idx])):
+            if col_idx in wrap_cols or len(_text(data[row_idx][col_idx])) > 12:
                 data[row_idx][col_idx] = _cell_para(data[row_idx][col_idx])
 
-    usable = 170 * mm
     if col_widths is None:
-        col_count = len(headers)
-        col_widths = [usable / col_count] * col_count if col_count else [usable]
+        col_widths = _default_col_widths(headers)
 
     table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(
         TableStyle(
             [
-                ("FONT", (0, 0), (-1, -1), FONT_NORMAL, 9),
-                ("FONT", (0, 0), (-1, 0), FONT_BOLD, 9),
+                ("FONT", (0, 0), (-1, -1), FONT_NORMAL, 8),
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f3f3f3")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#333333")),
                 ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#cccccc")),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 5),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 5),
-                ("TOPPADDING", (0, 0), (-1, -1), 4),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
             ]
         )
     )
@@ -420,8 +462,7 @@ def _news_block(news: list) -> list:
         _table(
             ["#", "標題", "來源", "發布時間", "連結"],
             rows,
-            col_widths=[10 * mm, 52 * mm, 28 * mm, 30 * mm, usable - 120 * mm],
-            wrap_cols={1, 2, 4},
+            col_widths=[8 * mm, 58 * mm, 24 * mm, 26 * mm, usable - 116 * mm],
         )
     ]
 
