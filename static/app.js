@@ -27,19 +27,15 @@ let revenueFilter = "24";
 let epsFilter = "12";
 
 const REVENUE_FILTER_PRESETS = [
-  ["24", "近 24 個月"],
-  ["12", "近 12 個月"],
-  ["ytd", "今年度"],
-  ["last_year", "去年"],
-  ["all", "全部"],
+  ["24", "近24個月"],
+  ["12", "近12個月"],
+  ["ytd", "今年"],
 ];
 
 const EPS_FILTER_PRESETS = [
-  ["12", "近 12 季"],
-  ["8", "近 8 季"],
-  ["ytd", "今年度"],
-  ["last_year", "去年"],
-  ["all", "全部"],
+  ["12", "近12季"],
+  ["8", "近8季"],
+  ["ytd", "今年"],
 ];
 
 function revenueYear(period) {
@@ -56,69 +52,39 @@ function epsYear(period) {
   return Number.isFinite(year) ? year : null;
 }
 
-function revenueFilterOptions(records) {
-  const options = [...REVENUE_FILTER_PRESETS];
-  const years = [
-    ...new Set(records.map((r) => revenueYear(r.期間)).filter((y) => y != null)),
-  ].sort((a, b) => b - a);
-  years.forEach((year) => {
-    const key = `year:${year}`;
-    if (!options.some(([k]) => k === key)) options.push([key, `${year} 年`]);
-  });
-  return options;
+function revenueFilterOptions() {
+  return [...REVENUE_FILTER_PRESETS];
 }
 
-function epsFilterOptions(records) {
-  const options = [...EPS_FILTER_PRESETS];
-  const years = [
-    ...new Set(records.map((r) => epsYear(r.期間)).filter((y) => y != null)),
-  ].sort((a, b) => b - a);
-  years.forEach((year) => {
-    const key = `year:${year}`;
-    if (!options.some(([k]) => k === key)) options.push([key, `${year} 年`]);
-  });
-  return options;
+function epsFilterOptions() {
+  return [...EPS_FILTER_PRESETS];
 }
 
 function filterRevenueRecords(records, mode = "24") {
   if (!records?.length) return [];
-  if (mode === "all") return [...records];
   if (mode === "12") return records.slice(0, 12);
   if (mode === "24") return records.slice(0, 24);
   const currentYear = new Date().getFullYear();
   if (mode === "ytd") return records.filter((r) => revenueYear(r.期間) === currentYear);
-  if (mode === "last_year") return records.filter((r) => revenueYear(r.期間) === currentYear - 1);
-  if (mode.startsWith("year:")) {
-    const year = parseInt(mode.split(":")[1], 10);
-    if (!Number.isFinite(year)) return records.slice(0, 24);
-    return records.filter((r) => revenueYear(r.期間) === year);
-  }
   return records.slice(0, 24);
 }
 
 function filterEpsRecords(records, mode = "12") {
   if (!records?.length) return [];
-  if (mode === "all") return [...records];
   if (mode === "8") return records.slice(0, 8);
   if (mode === "12") return records.slice(0, 12);
   const currentYear = new Date().getFullYear();
   if (mode === "ytd") return records.filter((r) => epsYear(r.期間) === currentYear);
-  if (mode === "last_year") return records.filter((r) => epsYear(r.期間) === currentYear - 1);
-  if (mode.startsWith("year:")) {
-    const year = parseInt(mode.split(":")[1], 10);
-    if (!Number.isFinite(year)) return records.slice(0, 12);
-    return records.filter((r) => epsYear(r.期間) === year);
-  }
   return records.slice(0, 12);
 }
 
-function revenueFilterLabel(mode, records = []) {
-  const match = revenueFilterOptions(records).find(([key]) => key === mode);
+function revenueFilterLabel(mode) {
+  const match = REVENUE_FILTER_PRESETS.find(([key]) => key === mode);
   return match ? match[1] : mode;
 }
 
-function epsFilterLabel(mode, records = []) {
-  const match = epsFilterOptions(records).find(([key]) => key === mode);
+function epsFilterLabel(mode) {
+  const match = EPS_FILTER_PRESETS.find(([key]) => key === mode);
   return match ? match[1] : mode;
 }
 
@@ -362,7 +328,7 @@ function refreshRevenueTable() {
   if (!f) return;
   const records = f.revenue_history || [];
   const filtered = filterRevenueRecords(records, revenueFilter);
-  const label = revenueFilterLabel(revenueFilter, records);
+  const label = revenueFilterLabel(revenueFilter);
   const titleEl = document.getElementById("revenue-section-title");
   if (titleEl) titleEl.textContent = `每月營收（${label}）`;
   const body = document.getElementById("revenue-filter-body");
@@ -379,7 +345,7 @@ function refreshEpsTable() {
   if (!f) return;
   const records = f.eps_history || [];
   const filtered = filterEpsRecords(records, epsFilter);
-  const label = epsFilterLabel(epsFilter, records);
+  const label = epsFilterLabel(epsFilter);
   const titleEl = document.getElementById("eps-section-title");
   if (titleEl) titleEl.textContent = `季 EPS（${label}）`;
   const body = document.getElementById("eps-filter-body");
@@ -619,8 +585,8 @@ function renderFundamental(f) {
   if (!revOptions.some(([key]) => key === revenueFilter)) revenueFilter = "24";
   if (!epsOptions.some(([key]) => key === epsFilter)) epsFilter = "12";
 
-  const revLabel = revenueFilterLabel(revenueFilter, revenueRecords);
-  const epsLabel = epsFilterLabel(epsFilter, epsRecords);
+  const revLabel = revenueFilterLabel(revenueFilter);
+  const epsLabel = epsFilterLabel(epsFilter);
   const revRows = filterRevenueRecords(revenueRecords, revenueFilter).map((r) => [
     r.期間, r["營收(億)"], r["月增率(%)"], r["年增率(%)"],
   ]);

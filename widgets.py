@@ -574,7 +574,7 @@ class FundamentalTab:
         )
         self.revenue_subtitle.pack(side="left")
 
-        self.revenue_filter_var = tk.StringVar(value="近 24 個月")
+        self.revenue_filter_var = tk.StringVar(value="近24個月")
         self.revenue_filter_combo = ttk.Combobox(
             revenue_head,
             textvariable=self.revenue_filter_var,
@@ -610,7 +610,7 @@ class FundamentalTab:
         )
         self.eps_subtitle.pack(side="left")
 
-        self.eps_filter_var = tk.StringVar(value="近 12 季")
+        self.eps_filter_var = tk.StringVar(value="近12季")
         self.eps_filter_combo = ttk.Combobox(
             eps_head,
             textvariable=self.eps_filter_var,

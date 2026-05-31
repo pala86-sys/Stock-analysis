@@ -5,19 +5,15 @@ from datetime import datetime
 import pandas as pd
 
 REVENUE_FILTER_PRESETS: list[tuple[str, str]] = [
-    ("24", "近 24 個月"),
-    ("12", "近 12 個月"),
-    ("ytd", "今年度"),
-    ("last_year", "去年"),
-    ("all", "全部"),
+    ("24", "近24個月"),
+    ("12", "近12個月"),
+    ("ytd", "今年"),
 ]
 
 EPS_FILTER_PRESETS: list[tuple[str, str]] = [
-    ("12", "近 12 季"),
-    ("8", "近 8 季"),
-    ("ytd", "今年度"),
-    ("last_year", "去年"),
-    ("all", "全部"),
+    ("12", "近12季"),
+    ("8", "近8季"),
+    ("ytd", "今年"),
 ]
 
 
@@ -543,32 +539,14 @@ def _eps_year(period: str) -> int | None:
         return None
 
 
-def revenue_filter_options(records: list[dict]) -> list[tuple[str, str]]:
-    """營收篩選選項（含資料中各年度）"""
-    options = list(REVENUE_FILTER_PRESETS)
-    years = sorted(
-        {y for y in (_revenue_year(r.get("期間", "")) for r in records) if y is not None},
-        reverse=True,
-    )
-    for year in years:
-        key = f"year:{year}"
-        if not any(k == key for k, _ in options):
-            options.append((key, f"{year} 年"))
-    return options
+def revenue_filter_options(records: list[dict] | None = None) -> list[tuple[str, str]]:
+    """營收篩選選項"""
+    return list(REVENUE_FILTER_PRESETS)
 
 
-def eps_filter_options(records: list[dict]) -> list[tuple[str, str]]:
-    """EPS 篩選選項（含資料中各年度）"""
-    options = list(EPS_FILTER_PRESETS)
-    years = sorted(
-        {y for y in (_eps_year(r.get("期間", "")) for r in records) if y is not None},
-        reverse=True,
-    )
-    for year in years:
-        key = f"year:{year}"
-        if not any(k == key for k, _ in options):
-            options.append((key, f"{year} 年"))
-    return options
+def eps_filter_options(records: list[dict] | None = None) -> list[tuple[str, str]]:
+    """EPS 篩選選項"""
+    return list(EPS_FILTER_PRESETS)
 
 
 def filter_revenue_records(records: list[dict], mode: str = "24") -> list[dict]:
@@ -576,8 +554,6 @@ def filter_revenue_records(records: list[dict], mode: str = "24") -> list[dict]:
     if not records:
         return []
 
-    if mode == "all":
-        return list(records)
     if mode == "12":
         return records[:12]
     if mode == "24":
@@ -586,14 +562,6 @@ def filter_revenue_records(records: list[dict], mode: str = "24") -> list[dict]:
     current_year = datetime.now().year
     if mode == "ytd":
         return [r for r in records if _revenue_year(r.get("期間", "")) == current_year]
-    if mode == "last_year":
-        return [r for r in records if _revenue_year(r.get("期間", "")) == current_year - 1]
-    if mode.startswith("year:"):
-        try:
-            year = int(mode.split(":", 1)[1])
-        except ValueError:
-            return records[:24]
-        return [r for r in records if _revenue_year(r.get("期間", "")) == year]
     return records[:24]
 
 
@@ -602,8 +570,6 @@ def filter_eps_records(records: list[dict], mode: str = "12") -> list[dict]:
     if not records:
         return []
 
-    if mode == "all":
-        return list(records)
     if mode == "8":
         return records[:8]
     if mode == "12":
@@ -612,14 +578,6 @@ def filter_eps_records(records: list[dict], mode: str = "12") -> list[dict]:
     current_year = datetime.now().year
     if mode == "ytd":
         return [r for r in records if _eps_year(r.get("期間", "")) == current_year]
-    if mode == "last_year":
-        return [r for r in records if _eps_year(r.get("期間", "")) == current_year - 1]
-    if mode.startswith("year:"):
-        try:
-            year = int(mode.split(":", 1)[1])
-        except ValueError:
-            return records[:12]
-        return [r for r in records if _eps_year(r.get("期間", "")) == year]
     return records[:12]
 
 
