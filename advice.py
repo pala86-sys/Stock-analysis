@@ -25,6 +25,20 @@ def _numeric(val) -> float | None:
     return None
 
 
+def _format_stock_price(val) -> str:
+    """格式化查詢當下股價"""
+    if val in (None, "", "無資料"):
+        return ""
+    try:
+        price = float(val)
+    except (TypeError, ValueError):
+        return str(val)
+    if abs(price - round(price)) < 1e-6:
+        return f"{int(round(price)):,}"
+    text = f"{price:,.2f}"
+    return text.rstrip("0").rstrip(".")
+
+
 def _score_fundamental(fundamental: dict) -> tuple[int, list[tuple[str, str, str]]]:
     """回傳 (分數, [(面向, 評語, 加減)])"""
     if "錯誤" in fundamental:
@@ -292,12 +306,17 @@ def build_investment_advice(
 
     detail_rows = fund_notes + tech_notes + chip_notes
 
+    price_raw = metrics.get("目前股價")
+    price_text = _format_stock_price(price_raw)
+
     return {
         "公司名稱": company,
         "英文名稱": english,
         "公司代號": code,
         "顯示名稱": display,
         "副標名稱": subline,
+        "目前股價": price_raw if price_raw not in (None, "") else "",
+        "目前股價顯示": f"{price_text} 元" if price_text else "",
         "價位評估": metrics.get("價位評估", ""),
         "價位說明": metrics.get("價位說明", ""),
         "價位tone": metrics.get("價位tone", "neutral"),

@@ -733,6 +733,12 @@ class AdviceTab:
         )
         self.company_sub_label.pack(fill="x", padx=14, pady=(0, 0))
 
+        self.stock_price_label = tk.Label(
+            self.card, text="", font=("Microsoft JhengHei", 12, "bold"),
+            bg="#F5F5F7", fg="#111111", anchor="w",
+        )
+        self.stock_price_label.pack(fill="x", padx=14, pady=(6, 0))
+
         self.price_level_label = tk.Label(
             self.card, text="", font=("Microsoft JhengHei", 11, "bold"),
             bg="#F5F5F7", fg="#333333", anchor="w",
@@ -843,6 +849,7 @@ class AdviceTab:
         self._set_card("⏳ 分析中…", "", "正在彙整基本面、技術面、籌碼面資料…", "neutral")
         self.company_label.config(text="")
         self.company_sub_label.config(text="")
+        self.stock_price_label.config(text="")
         self.price_level_label.config(text="")
         self._clear(self.dim_tree)
         self._clear(self.detail_tree)
@@ -864,6 +871,14 @@ class AdviceTab:
         else:
             self.company_sub_label.config(text="")
             self.company_sub_label.pack_forget()
+
+        price_display = data.get("目前股價顯示", "")
+        if price_display:
+            self.stock_price_label.config(text=f"目前股價：{price_display}")
+            self.stock_price_label.pack(fill="x", padx=14, pady=(6, 0))
+        else:
+            self.stock_price_label.config(text="")
+            self.stock_price_label.pack_forget()
 
         price_label = data.get("價位評估", "")
         price_reason = data.get("價位說明", "")

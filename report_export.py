@@ -49,6 +49,9 @@ def _advice_block(advice: dict) -> str:
     name_html = f"<p class=\"company\">{_esc(display)}</p>"
     if subline:
         name_html += f"<p class=\"company-sub\">{_esc(subline)}</p>"
+    price_display = advice.get("目前股價顯示", "")
+    if price_display:
+        name_html += f"<p class=\"stock-price\">目前股價：{_esc(price_display)}</p>"
     price_label = advice.get("價位評估", "")
     price_reason = advice.get("價位說明", "")
     if price_label and price_label != "無法判定":
@@ -268,6 +271,7 @@ def build_html_report(
   .company {{ margin: 0; color: #222; font-size: 1.2rem; font-weight: bold; }}
   .company-sub {{ margin: 4px 0 0; color: #888; font-size: 0.9rem; }}
   .price-level {{ margin: 8px 0 0; font-size: 0.95rem; font-weight: bold; color: #333; }}
+  .stock-price {{ margin: 8px 0 0; font-size: 1.05rem; font-weight: bold; color: #111; }}
   .verdict {{ margin: 8px 0 4px; font-size: 1.3rem; font-weight: bold; }}
   .score {{ margin: 0 0 8px; color: #666; }}
   .suggestion {{ margin: 0; line-height: 1.6; }}

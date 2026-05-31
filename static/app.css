@@ -203,6 +203,13 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .price-level.fair { color: var(--fair); }
 .price-level.expensive { color: var(--expensive); }
 
+.stock-price {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 8px 0 4px;
+  color: #111;
+}
+
 .table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;

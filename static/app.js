@@ -115,6 +115,10 @@ function renderAdvice(advice) {
   const display = advice.顯示名稱 || advice.公司名稱 || "—";
   const sub = advice.副標名稱 || "";
   const priceLine =
+    advice.目前股價顯示
+      ? `<p class="stock-price">目前股價：${esc(advice.目前股價顯示)}</p>`
+      : "";
+  const valuationLine =
     advice.價位評估 && advice.價位評估 !== "無法判定"
       ? `<p class="price-level ${priceMap[priceTone] || ""}">目前價位：${esc(advice.價位評估)} ｜ ${esc(advice.價位說明)}</p>`
       : "";
@@ -127,6 +131,7 @@ function renderAdvice(advice) {
       <p class="company">${esc(display)}</p>
       ${sub ? `<p class="sub">${esc(sub)}</p>` : ""}
       ${priceLine}
+      ${valuationLine}
       <h2>入手參考：${esc(advice.評等)}</h2>
       <p>綜合得分 ${esc(advice.綜合得分)}（基本面 + 技術面 + 籌碼面）</p>
       <p>${esc(advice.入手參考)}</p>
