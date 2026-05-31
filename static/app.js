@@ -250,6 +250,26 @@ function renderAdvice(advice) {
   const suggestion = advice.入手參考 || "";
   const dimRows = (advice.dimensions || []).map((d) => toRow(d));
   const detailRows = (advice.details || []).map((d) => toRow(d));
+  const candleSignals = advice.關鍵K棒 || [];
+  const candleBlock =
+    candleSignals.length > 0
+      ? `
+    <section class="panel-glass advice-candles">
+      <h3 class="panel-section-title">關鍵 K 棒訊號</h3>
+      <div class="candle-signals">
+        ${candleSignals
+          .map(
+            (s) =>
+              `<div class="candle-signal ${esc(s.tone || "neutral")}">
+                <span class="candle-signal-name">${esc(s.名稱 || "")}</span>
+                <span class="candle-signal-date">${esc(s.日期 || "")}</span>
+                <span class="candle-signal-desc">${esc(s.說明 || "")}</span>
+              </div>`
+          )
+          .join("")}
+      </div>
+    </section>`
+      : "";
 
   const valuationBlock =
     valLabel || valSummary || valMetrics
@@ -298,6 +318,8 @@ function renderAdvice(advice) {
           </section>
         </div>
       </div>
+
+      ${candleBlock}
 
       <div class="panel-details">
         ${panelSection("各面向得分", table(["面向", "得分", "說明"], dimRows))}

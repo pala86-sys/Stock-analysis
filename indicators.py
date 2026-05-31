@@ -119,6 +119,201 @@ def format_support_resistance(levels: dict) -> dict:
     return result
 
 
+def _row_date(row, index) -> str:
+    if hasattr(index, "strftime"):
+        return index.strftime("%Y-%m-%d")
+    return str(index)[:10]
+
+
+def _candle_parts(o: float, c: float, h: float, l: float) -> dict | None:
+    rng = h - l
+    if rng <= 0:
+        return None
+    body_top = max(o, c)
+    body_bottom = min(o, c)
+    body = body_top - body_bottom
+    return {
+        "range": rng,
+        "body": body,
+        "upper": h - body_top,
+        "lower": body_bottom - l,
+        "body_top": body_top,
+        "body_bottom": body_bottom,
+    }
+
+
+def _recent_trend(work: pd.DataFrame, i: int, window: int = 5) -> str:
+    """近幾日偏多 / 偏空 / 中性（供型態情境判斷）"""
+    if i < window:
+        return "neutral"
+    close_now = float(work["Close"].iloc[i])
+    close_prev = float(work["Close"].iloc[i - window])
+    ma20 = work["MA20"].iloc[i] if "MA20" in work.columns else None
+    if pd.notna(ma20):
+        if close_now > float(ma20) and close_now >= close_prev * 1.01:
+            return "up"
+        if close_now < float(ma20) and close_now <= close_prev * 0.99:
+            return "down"
+    if close_now >= close_prev * 1.02:
+        return "up"
+    if close_now <= close_prev * 0.98:
+        return "down"
+    return "neutral"
+
+
+def _detect_single_candle_patterns(
+    parts: dict,
+    *,
+    avg_body: float,
+    trend: str,
+    date: str,
+) -> list[dict]:
+    """單日 K 棒型態（錘子 / 吊人 / 十字 / 射擊之星等）"""
+    out: list[dict] = []
+    rng = parts["range"]
+    body = parts["body"]
+    upper = parts["upper"]
+    lower = parts["lower"]
+    body_ref = avg_body if avg_body > 0 else rng * 0.15
+    min_body = max(body_ref * 0.08, rng * 0.03)
+
+    def sig(name: str, desc: str, tone: str, score: int):
+        out.append({"名稱": name, "日期": date, "說明": desc, "tone": tone, "分數": score})
+
+    effective_body = max(body, min_body)
+
+    # 錘子 / 吊人：長下影、小實體、上影線短
+    hammer_shape = lower >= effective_body * 2 and upper <= effective_body * 0.7
+    if hammer_shape:
+        if trend == "down":
+            sig("錘子線", f"{date} 錘子線，下跌後多方反攻訊號", "bull", 1)
+        elif trend == "up":
+            sig("吊人線", f"{date} 吊人線，上漲後留意回檔風險", "bear", -1)
+        else:
+            sig("錘子線", f"{date} 長下影 K 棒，下方有支撐力道", "bull", 0)
+
+    # 射擊之星 / 倒錘：長上影、小實體、下影線短
+    star_shape = upper >= effective_body * 2 and lower <= effective_body * 0.7
+    if star_shape and not hammer_shape:
+        if trend == "up":
+            sig("射擊之星", f"{date} 射擊之星，上檔賣壓浮現", "bear", -1)
+        elif trend == "down":
+            sig("倒錘線", f"{date} 倒錘線，下跌後可能止跌", "bull", 1)
+        else:
+            sig("射擊之星", f"{date} 長上影 K 棒，上方壓力較重", "bear", 0)
+
+    # 十字系列：實體極小
+    is_doji = body <= max(body_ref * 0.12, rng * 0.08)
+    if is_doji and not hammer_shape and not star_shape:
+        if lower >= rng * 0.55 and upper <= rng * 0.15:
+            if trend == "down":
+                sig("蜻蜓十字", f"{date} 蜻蜓十字，低檔止跌參考", "bull", 1)
+            else:
+                sig("蜻蜓十字", f"{date} 蜻蜓十字，下方有買盤承接", "bull", 0)
+        elif upper >= rng * 0.55 and lower <= rng * 0.15:
+            if trend == "up":
+                sig("墓碑十字", f"{date} 墓碑十字，高檔轉弱參考", "bear", -1)
+            else:
+                sig("墓碑十字", f"{date} 墓碑十字，上方賣壓較重", "bear", 0)
+        else:
+            sig("十字星", f"{date} 十字星，多空猶豫、方向待確認", "neutral", 0)
+
+    return out
+
+
+def detect_key_candle_signals(df: pd.DataFrame, lookback: int = 5) -> list[dict]:
+    """
+    偵測近期關鍵 K 棒與均線交叉（台股：紅漲綠跌）。
+    回傳 [{名稱, 日期, 說明, tone, 分數}, ...]，由近到遠、同類型只保留最近一筆。
+    """
+    if df is None or len(df) < 3:
+        return []
+
+    work = df.copy()
+    if "Volume" not in work.columns:
+        work["Volume"] = 0
+
+    opens = work["Open"].astype(float)
+    closes = work["Close"].astype(float)
+    highs = work["High"].astype(float)
+    lows = work["Low"].astype(float)
+    volumes = work["Volume"].astype(float)
+
+    body = (closes - opens).abs()
+    avg_body = body.rolling(20, min_periods=5).mean().shift(1)
+    avg_vol = volumes.rolling(20, min_periods=5).mean().shift(1)
+
+    signals: list[dict] = []
+    start = max(1, len(work) - lookback)
+
+    def _append(name: str, date: str, desc: str, tone: str, score: int):
+        signals.append({"名稱": name, "日期": date, "說明": desc, "tone": tone, "分數": score})
+
+    for i in range(start, len(work)):
+        idx = work.index[i]
+        date = _row_date(work.iloc[i], idx)
+        o, c, h, l = float(opens.iloc[i]), float(closes.iloc[i]), float(highs.iloc[i]), float(lows.iloc[i])
+        vol = float(volumes.iloc[i])
+        b = abs(c - o)
+        prev_o, prev_c = float(opens.iloc[i - 1]), float(closes.iloc[i - 1])
+        prev_b = abs(prev_c - prev_o)
+
+        bull = c > o
+        bear = c < o
+        prev_bull = prev_c > prev_o
+        prev_bear = prev_c < prev_o
+
+        ab = avg_body.iloc[i] if pd.notna(avg_body.iloc[i]) and avg_body.iloc[i] > 0 else b
+        av = avg_vol.iloc[i] if pd.notna(avg_vol.iloc[i]) and avg_vol.iloc[i] > 0 else vol
+        long_body = b >= ab * 1.3 and (h - l) > 0 and b / (h - l) >= 0.5
+        high_vol = vol >= av * 1.5 if av > 0 else False
+
+        if bull and prev_bear and c >= prev_o and o <= prev_c and b > prev_b:
+            _append("長紅吞噬", date, f"{date} 出現長紅吞噬，多方反轉訊號", "bull", 1)
+        if bear and prev_bull and c <= prev_o and o >= prev_c and b > prev_b:
+            _append("長黑吞噬", date, f"{date} 出現長黑吞噬，空方反轉訊號", "bear", -1)
+        if bull and long_body and high_vol:
+            _append("大量長紅", date, f"{date} 放量長紅，短線買盤強勁", "bull", 1)
+        if bear and long_body and high_vol:
+            _append("大量長黑", date, f"{date} 放量長黑，短線賣壓偏重", "bear", -1)
+
+        parts = _candle_parts(o, c, h, l)
+        if parts:
+            trend = _recent_trend(work, i)
+            for pat in _detect_single_candle_patterns(
+                parts, avg_body=ab, trend=trend, date=date
+            ):
+                _append(pat["名稱"], pat["日期"], pat["說明"], pat["tone"], pat["分數"])
+
+        for fast, slow, gold_name, death_name in (
+            ("MA5", "MA20", "黃金交叉（5日↑20日）", "死亡交叉（5日↓20日）"),
+            ("MA20", "MA60", "黃金交叉（月↑季）", "死亡交叉（月↓季）"),
+        ):
+            if fast not in work.columns or slow not in work.columns:
+                continue
+            f_now = work[fast].iloc[i]
+            s_now = work[slow].iloc[i]
+            f_prev = work[fast].iloc[i - 1]
+            s_prev = work[slow].iloc[i - 1]
+            if not all(pd.notna(x) for x in (f_now, s_now, f_prev, s_prev)):
+                continue
+            if f_prev <= s_prev and f_now > s_now:
+                _append(gold_name, date, f"{date} {gold_name}，均線偏多", "bull", 1)
+            elif f_prev >= s_prev and f_now < s_now:
+                _append(death_name, date, f"{date} {death_name}，均線偏空", "bear", -1)
+
+    # 同類型只保留最近一筆
+    seen: set[str] = set()
+    unique: list[dict] = []
+    for sig in reversed(signals):
+        if sig["名稱"] in seen:
+            continue
+        seen.add(sig["名稱"])
+        unique.append(sig)
+    unique.reverse()
+    return unique
+
+
 def format_lots(shares: int) -> str:
     """將股數轉換為張數並加上正負號與千分位"""
     lots = shares / 1000

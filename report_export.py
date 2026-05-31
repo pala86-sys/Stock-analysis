@@ -221,6 +221,19 @@ def _advice_block(advice: dict) -> list:
             _para(f"入手參考：{advice.get('評等', '')}", "body"),
             _para(f"綜合得分 {advice.get('綜合得分', '')}", "body"),
             _para(advice.get("入手參考", ""), "body"),
+        ]
+    )
+    candles = advice.get("關鍵K棒") or []
+    if candles:
+        flow.append(_para("關鍵 K 棒訊號", "h3"))
+        flow.append(
+            _table(
+                ["型態", "日期", "說明"],
+                [[c.get("名稱", ""), c.get("日期", ""), c.get("說明", "")] for c in candles],
+            )
+        )
+    flow.extend(
+        [
             _para("各面向得分", "h3"),
             _table(
                 ["面向", "得分", "說明"],

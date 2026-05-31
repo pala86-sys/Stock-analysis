@@ -508,6 +508,77 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   font-size: 0.95rem;
 }
 
+.advice-candles {
+  margin-top: 12px;
+}
+
+.candle-signals {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.candle-signal {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) 100px 1fr;
+  gap: 8px 12px;
+  align-items: baseline;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.candle-signal.bull {
+  border-color: rgba(239, 83, 80, 0.35);
+  background: rgba(239, 83, 80, 0.08);
+}
+
+.candle-signal.bear {
+  border-color: rgba(38, 166, 154, 0.35);
+  background: rgba(38, 166, 154, 0.08);
+}
+
+.candle-signal.neutral {
+  border-color: rgba(255, 209, 102, 0.25);
+  background: rgba(255, 209, 102, 0.06);
+}
+
+.candle-signal-name {
+  font-weight: 700;
+  color: #ffd166;
+}
+
+.candle-signal.bull .candle-signal-name {
+  color: #ff8a80;
+}
+
+.candle-signal.bear .candle-signal-name {
+  color: #80cbc4;
+}
+
+.candle-signal.neutral .candle-signal-name {
+  color: #ffe082;
+}
+
+.candle-signal-date {
+  font-size: 0.85rem;
+  color: rgba(232, 244, 255, 0.55);
+}
+
+.candle-signal-desc {
+  grid-column: 1 / -1;
+  font-size: 0.9rem;
+  color: rgba(232, 244, 255, 0.85);
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .candle-signal {
+    grid-template-columns: 1fr;
+  }
+}
+
 .advice-hero {
   flex: 1;
   display: flex;

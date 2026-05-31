@@ -763,6 +763,19 @@ class AdviceTab:
         )
         self.suggestion_label.pack(fill="x", padx=14, pady=(0, 12))
 
+        self.candle_frame = tk.Frame(self.frame, bg="white")
+        self.candle_frame.pack(fill="x", padx=16, pady=(0, 8))
+        tk.Label(
+            self.candle_frame, text="關鍵 K 棒訊號",
+            font=("Microsoft JhengHei", 10, "bold"), bg="white", fg="#444444", anchor="w",
+        ).pack(fill="x", pady=(0, 4))
+        self.candle_text = tk.Label(
+            self.candle_frame, text="",
+            font=("Microsoft JhengHei", 10), bg="white", fg="#333333",
+            anchor="w", justify="left", wraplength=820,
+        )
+        self.candle_text.pack(fill="x")
+
         tk.Label(
             self.frame, text="各面向得分",
             font=("Microsoft JhengHei", 10, "bold"), bg="white", fg="#444444", anchor="w",
@@ -854,6 +867,7 @@ class AdviceTab:
         self._clear(self.dim_tree)
         self._clear(self.detail_tree)
         self.disclaimer_label.config(text="")
+        self.candle_text.config(text="")
         self.set_export_enabled(False)
 
     def render(self, data: dict):
@@ -900,6 +914,13 @@ class AdviceTab:
             suggestion,
             tone,
         )
+
+        candles = data.get("關鍵K棒") or []
+        if candles:
+            lines = [f"• {c.get('名稱', '')}（{c.get('日期', '')}）— {c.get('說明', '')}" for c in candles]
+            self.candle_text.config(text="\n".join(lines))
+        else:
+            self.candle_text.config(text="近 5 日未偵測到典型 K 棒型態")
 
         self._clear(self.dim_tree)
         for i, (name, dim_score, desc) in enumerate(data.get("dimensions", [])):

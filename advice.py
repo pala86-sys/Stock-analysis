@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from indicators import detect_key_candle_signals
 from valuation import pb_detail_note, pe_detail_note, pe_invalid_reason, valid_ratio
 
 
@@ -200,6 +201,29 @@ def _score_technical(technical: dict) -> tuple[int, list[tuple[str, str, str]]]:
     return score, notes
 
 
+def _score_candle_signals(technical: dict) -> tuple[int, list[tuple[str, str, str]], list[dict]]:
+    """偵測關鍵 K 棒型態，回傳 (加減分, 評估細項, 關鍵K棒列表)"""
+    full_data = technical.get("full_data")
+    if full_data is None or (isinstance(full_data, pd.DataFrame) and full_data.empty):
+        return 0, [], []
+
+    if "error" in technical:
+        return 0, [], []
+
+    signals = detect_key_candle_signals(full_data, lookback=5)
+    if not signals:
+        return 0, [("關鍵K棒", "近 5 日未偵測到典型型態", "0")], []
+
+    score = 0
+    notes: list[tuple[str, str, str]] = []
+    for sig in signals:
+        delta = sig.get("分數", 0)
+        score += delta
+        delta_str = f"{delta:+d}" if delta else "0"
+        notes.append((sig["名稱"], sig["說明"], delta_str))
+    return score, notes, signals
+
+
 def _score_support_resistance(technical: dict) -> tuple[int, list[tuple[str, str, str]]]:
     """依現價與支撐 / 壓力距離評分"""
     levels = technical.get("levels") or {}
@@ -315,6 +339,9 @@ def build_investment_advice(
     """綜合基本面、技術面、籌碼面產生入手參考評估"""
     fund_score, fund_notes = _score_fundamental(fundamental)
     tech_score, tech_notes = _score_technical(technical)
+    candle_score, candle_notes, candle_signals = _score_candle_signals(technical)
+    tech_score += candle_score
+    tech_notes.extend(candle_notes)
     sr_score, sr_notes = _score_support_resistance(technical)
     tech_score += sr_score
     tech_notes.extend(sr_notes)
@@ -334,7 +361,7 @@ def build_investment_advice(
 
     dimension_rows = [
         ("基本面", fund_score, "獲利與估值"),
-        ("技術面", tech_score, "均線 / KD / MACD / 支撐壓力"),
+        ("技術面", tech_score, "均線 / KD / MACD / 關鍵K棒 / 支撐壓力"),
         ("籌碼面", chip_score, "三大法人動向"),
     ]
 
@@ -363,5 +390,6 @@ def build_investment_advice(
         "tone": tone,
         "dimensions": dimension_rows,
         "details": detail_rows,
+        "關鍵K棒": candle_signals,
         "免責聲明": "以上為程式依公開資料自動產生之規則式參考，不構成投資建議，請自行判斷並自負盈虧。",
     }
