@@ -13,10 +13,10 @@ import pandas as pd
 from matplotlib.collections import LineCollection
 from matplotlib.figure import Figure
 
+from chart_fonts import configure_chart_fonts
 from indicators import compute_support_resistance
 
-plt.rcParams["font.sans-serif"] = ["Microsoft JhengHei", "SimHei", "Arial Unicode MS", "DejaVu Sans"]
-plt.rcParams["axes.unicode_minus"] = False
+configure_chart_fonts()
 
 BG = "#1e1e1e"
 PANEL = "#252525"

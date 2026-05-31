@@ -9,8 +9,9 @@ from indicators import compute_support_resistance
 
 import matplotlib.pyplot as plt
 
-plt.rcParams["font.sans-serif"] = ["Microsoft JhengHei", "SimHei", "Arial Unicode MS", "DejaVu Sans"]
-plt.rcParams["axes.unicode_minus"] = False
+from chart_fonts import configure_chart_fonts
+
+configure_chart_fonts()
 
 
 class TechnicalChart:

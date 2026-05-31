@@ -23,7 +23,10 @@ a = Analysis(
     ["main.py"],
     pathex=[],
     binaries=[],
-    datas=[("data/stock_list.json", "data")],
+    datas=[
+        ("data/stock_list.json", "data"),
+        ("assets/fonts/NotoSansTC-Regular.otf", "assets/fonts"),
+    ],
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},

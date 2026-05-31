@@ -14,5 +14,12 @@ fi
 "$PY" -m venv .venv
 source .venv/bin/activate
 
+FONT="assets/fonts/NotoSansTC-Regular.otf"
+if [[ ! -f "$FONT" ]]; then
+  mkdir -p assets/fonts
+  curl -fsSL -o "$FONT" \
+    "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/SubsetOTF/TC/NotoSansTC-Regular.otf"
+fi
+
 pip install --upgrade pip
 pip install -r requirements-web.txt
