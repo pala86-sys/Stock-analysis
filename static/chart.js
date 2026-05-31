@@ -78,8 +78,10 @@
     const minGap = 14;
     const minY = panel.y + 8;
     const maxY = panel.y + panel.h - 6;
-    const leftX = padL + 4;
-    const rightX = padL + plotW - 4;
+    const leftX = padL - 4;
+    const rightX = padL + plotW + 4;
+    const plotLeft = padL;
+    const plotRight = padL + plotW;
 
     const leftItems = labels
       .filter((l) => l.side === "left")
@@ -114,7 +116,8 @@
     ctx.font = "10px sans-serif";
     placed.forEach((item) => {
       const x = item.side === "right" ? rightX : leftX;
-      const align = item.side === "right" ? "right" : "left";
+      const align = item.side === "right" ? "left" : "right";
+      const lineX = item.side === "right" ? plotRight : plotLeft;
 
       if (Math.abs(item.labelY - item.lineY) > 2) {
         ctx.save();
@@ -124,20 +127,20 @@
         ctx.setLineDash([2, 3]);
         ctx.beginPath();
         ctx.moveTo(x, item.labelY);
-        ctx.lineTo(padL + plotW * (item.side === "left" ? 0.42 : 0.58), item.lineY);
+        ctx.lineTo(lineX, item.lineY);
         ctx.stroke();
         ctx.restore();
       }
 
-      const tw = ctx.measureText(item.text).width;
-      const pad = 4;
-      const boxX = item.side === "right" ? x - tw - pad * 2 : x;
-      ctx.fillStyle = "rgba(11, 21, 32, 0.88)";
-      ctx.fillRect(boxX, item.labelY - 7, tw + pad * 2, 14);
-      ctx.fillStyle = item.color;
+      ctx.save();
       ctx.textAlign = align;
       ctx.textBaseline = "middle";
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = BG;
+      ctx.strokeText(item.text, x, item.labelY);
+      ctx.fillStyle = item.color;
       ctx.fillText(item.text, x, item.labelY);
+      ctx.restore();
     });
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
@@ -285,7 +288,7 @@
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const padL = 52;
-      const padR = 12;
+      const padR = 54;
       const padT = 8;
       const padB = 8;
       const plotW = w - padL - padR;
