@@ -763,6 +763,19 @@ class AdviceTab:
         )
         self.suggestion_label.pack(fill="x", padx=14, pady=(0, 12))
 
+        self.probability_frame = tk.Frame(self.frame, bg="white")
+        self.probability_frame.pack(fill="x", padx=16, pady=(0, 8))
+        tk.Label(
+            self.probability_frame, text="以現價入手 · 賺賠參考機率",
+            font=("Microsoft JhengHei", 10, "bold"), bg="white", fg="#444444", anchor="w",
+        ).pack(fill="x", pady=(0, 4))
+        self.probability_text = tk.Label(
+            self.probability_frame, text="",
+            font=("Microsoft JhengHei", 10), bg="white", fg="#333333",
+            anchor="w", justify="left", wraplength=820,
+        )
+        self.probability_text.pack(fill="x")
+
         self.candle_frame = tk.Frame(self.frame, bg="white")
         self.candle_frame.pack(fill="x", padx=16, pady=(0, 8))
         tk.Label(
@@ -868,6 +881,7 @@ class AdviceTab:
         self._clear(self.detail_tree)
         self.disclaimer_label.config(text="")
         self.candle_text.config(text="")
+        self.probability_text.config(text="")
         self.set_export_enabled(False)
 
     def render(self, data: dict):
@@ -914,6 +928,28 @@ class AdviceTab:
             suggestion,
             tone,
         )
+
+        prob = data.get("入手機率") or {}
+        overall = prob.get("綜合") or {}
+        intervals = prob.get("區間") or []
+        if overall:
+            lines = [
+                f"綜合參考：賺錢 {overall.get('賺錢機率', '—')}% ／ 賠錢 {overall.get('賠錢機率', '—')}%",
+            ]
+            for row in intervals:
+                avg = row.get("平均報酬率")
+                avg_text = f"，平均報酬 {avg:+.2f}%" if avg is not None else ""
+                sample = row.get("樣本數", 0)
+                sample_text = f"（樣本 {sample}）" if sample else ""
+                lines.append(
+                    f"• {row.get('標籤', '')}：賺 {row.get('賺錢機率', '—')}% ／ "
+                    f"賠 {row.get('賠錢機率', '—')}%{avg_text}{sample_text}"
+                )
+            if prob.get("說明"):
+                lines.append(prob["說明"])
+            self.probability_text.config(text="\n".join(lines))
+        else:
+            self.probability_text.config(text="")
 
         candles = data.get("關鍵K棒") or []
         if candles:

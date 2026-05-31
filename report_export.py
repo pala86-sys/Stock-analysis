@@ -223,6 +223,37 @@ def _advice_block(advice: dict) -> list:
             _para(advice.get("入手參考", ""), "body"),
         ]
     )
+    prob = advice.get("入手機率") or {}
+    overall = prob.get("綜合") or {}
+    intervals = prob.get("區間") or []
+    if overall:
+        flow.append(_para("以現價入手 · 賺賠參考機率", "h3"))
+        flow.append(
+            _para(
+                f"綜合參考：賺錢 {overall.get('賺錢機率', '—')}% ／ "
+                f"賠錢 {overall.get('賠錢機率', '—')}%",
+                "body",
+            )
+        )
+        prob_rows = []
+        for row in intervals:
+            avg = row.get("平均報酬率")
+            avg_text = f"{avg:+.2f}%" if avg is not None else "—"
+            prob_rows.append([
+                row.get("標籤", ""),
+                f"{row.get('賺錢機率', '—')}%",
+                f"{row.get('賠錢機率', '—')}%",
+                avg_text,
+                row.get("樣本數", "—"),
+            ])
+        flow.append(
+            _table(
+                ["持有區間", "賺錢機率", "賠錢機率", "平均報酬", "樣本數"],
+                prob_rows,
+            )
+        )
+        if prob.get("說明"):
+            flow.append(_para(prob["說明"], "body"))
     candles = advice.get("關鍵K棒") or []
     if candles:
         flow.append(_para("關鍵 K 棒訊號", "h3"))

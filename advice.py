@@ -318,6 +318,135 @@ def _score_chips(chips: dict) -> tuple[int, list[tuple[str, str, str]]]:
     return score, notes
 
 
+def _day_technical_score(row) -> int:
+    """單日技術面得分（供歷史相似型態比對）"""
+    price = row["Close"]
+    ma20 = row.get("MA20")
+    ma60 = row.get("MA60")
+    k_val = row.get("K")
+    d_val = row.get("D")
+    dif = row.get("DIF")
+    dea = row.get("DEA")
+
+    score = 0
+    if pd.notna(ma20) and pd.notna(ma60):
+        if price > ma20 > ma60:
+            score += 2
+        elif price > ma20:
+            score += 1
+        elif price < ma20:
+            score -= 1
+        if price < ma60:
+            score -= 1
+
+    if pd.notna(k_val) and pd.notna(d_val):
+        if k_val > 80 and d_val > 80:
+            score -= 1
+        elif k_val < 20 and d_val < 20:
+            score += 1
+        elif k_val > d_val:
+            score += 1
+        else:
+            score -= 1
+
+    if pd.notna(dif) and pd.notna(dea):
+        if dif > dea:
+            score += 1
+        else:
+            score -= 1
+
+    return score
+
+
+def _score_based_win_probability(total: int) -> float:
+    """依綜合得分推估參考勝率（規則式，收斂於 30～70%）"""
+    return max(30.0, min(70.0, 50.0 + total * 2.0))
+
+
+def _estimate_entry_probability(total: int, tech_score: int, technical: dict) -> dict:
+    """
+    估算以現價入手的賺錢 / 賠錢參考機率。
+    結合綜合得分與歷史相似技術型態之後續報酬統計（規則式參考，非保證）。
+    """
+    score_win = _score_based_win_probability(total)
+    horizons = (
+        (5, "短線約 1 週"),
+        (20, "中線約 1 個月"),
+        (60, "長線約 3 個月"),
+    )
+    interval_rows: list[dict] = []
+
+    full_data = technical.get("full_data")
+    has_history = (
+        full_data is not None
+        and isinstance(full_data, pd.DataFrame)
+        and not full_data.empty
+        and len(full_data) > 80
+        and "error" not in technical
+    )
+
+    closes = full_data["Close"].values if has_history else None
+
+    for days, label in horizons:
+        hist_win: float | None = None
+        avg_return: float | None = None
+        sample = 0
+        source = "綜合得分推估"
+
+        if has_history and closes is not None:
+            returns: list[float] = []
+            last_i = len(full_data) - days - 1
+            for i in range(60, last_i + 1):
+                if abs(_day_technical_score(full_data.iloc[i]) - tech_score) > 4:
+                    continue
+                entry = closes[i]
+                exit_price = closes[i + days]
+                if entry <= 0:
+                    continue
+                returns.append((exit_price - entry) / entry)
+
+            sample = len(returns)
+            if sample >= 8:
+                hist_win = sum(1 for r in returns if r > 0) / sample * 100
+                avg_return = sum(returns) / sample * 100
+                source = "歷史相似型態 + 綜合得分"
+
+        if hist_win is not None:
+            weight = min(0.65, sample / 40)
+            win = weight * hist_win + (1 - weight) * score_win
+        else:
+            win = score_win
+
+        win = round(max(30.0, min(70.0, win)), 1)
+        loss = round(100.0 - win, 1)
+        row = {
+            "持有天數": days,
+            "標籤": label,
+            "賺錢機率": win,
+            "賠錢機率": loss,
+            "樣本數": sample,
+            "資料來源": source,
+        }
+        if avg_return is not None:
+            row["平均報酬率"] = round(avg_return, 2)
+        interval_rows.append(row)
+
+    composite_win = interval_rows[1]["賺錢機率"] if len(interval_rows) > 1 else round(score_win, 1)
+    composite_loss = round(100.0 - composite_win, 1)
+
+    return {
+        "說明": (
+            "依目前綜合得分與歷史相似技術型態之後續漲跌統計推估，"
+            "僅供參考，不代表未來實際結果或保證獲利。"
+        ),
+        "綜合": {
+            "賺錢機率": composite_win,
+            "賠錢機率": composite_loss,
+        },
+        "區間": interval_rows,
+    }
+
+
 def _verdict(total: int) -> tuple[str, str, str]:
     """回傳 (結論, 建議, 燈號顏色 key)"""
     if total >= 8:
@@ -370,6 +499,7 @@ def build_investment_advice(
     price_raw = metrics.get("目前股價")
     price_text = _format_stock_price(price_raw)
     val_summary, val_indicators = _build_valuation_display(metrics)
+    entry_probability = _estimate_entry_probability(total, tech_score, technical)
 
     return {
         "公司名稱": company,
@@ -391,5 +521,9 @@ def build_investment_advice(
         "dimensions": dimension_rows,
         "details": detail_rows,
         "關鍵K棒": candle_signals,
-        "免責聲明": "以上為程式依公開資料自動產生之規則式參考，不構成投資建議，請自行判斷並自負盈虧。",
+        "入手機率": entry_probability,
+        "免責聲明": (
+            "以上為程式依公開資料自動產生之規則式參考，不構成投資建議，請自行判斷並自負盈虧。"
+            "賺賠機率為統計推估，並非對個別交易結果之保證或預測。"
+        ),
     }

@@ -235,6 +235,62 @@ function formatAdviceTitle(display, code) {
   return `${display} (${code})`;
 }
 
+function renderEntryProbability(prob) {
+  if (!prob || !prob.綜合) return "";
+  const overall = prob.綜合;
+  const win = Number(overall.賺錢機率) || 50;
+  const loss = Number(overall.賠錢機率) || 50;
+  const intervals = prob.區間 || [];
+
+  const intervalCards = intervals
+    .map((row) => {
+      const w = Number(row.賺錢機率) || 50;
+      const l = Number(row.賠錢機率) || 50;
+      const avg =
+        row.平均報酬率 != null
+          ? `<span class="prob-avg">平均報酬 ${row.平均報酬率 > 0 ? "+" : ""}${esc(String(row.平均報酬率))}%</span>`
+          : "";
+      const sample =
+        row.樣本數 > 0
+          ? `<span class="prob-sample">樣本 ${esc(String(row.樣本數))} 次</span>`
+          : "";
+      return `<article class="prob-card">
+        <div class="prob-card-head">
+          <span class="prob-card-label">${esc(row.標籤 || "")}</span>
+          ${sample}
+        </div>
+        <div class="prob-bar-row">
+          <span class="prob-bar-label win">賺 ${w}%</span>
+          <div class="prob-bar"><span class="prob-bar-win" style="width:${w}%"></span></div>
+        </div>
+        <div class="prob-bar-row">
+          <span class="prob-bar-label loss">賠 ${l}%</span>
+          <div class="prob-bar"><span class="prob-bar-loss" style="width:${l}%"></span></div>
+        </div>
+        <div class="prob-card-meta">${avg}<span class="prob-source">${esc(row.資料來源 || "")}</span></div>
+      </article>`;
+    })
+    .join("");
+
+  return `
+    <section class="panel-glass advice-probability">
+      <h3 class="panel-section-title">以現價入手 · 賺賠參考機率</h3>
+      <div class="prob-overall">
+        <div class="prob-overall-item win">
+          <span class="prob-overall-num">${win}%</span>
+          <span class="prob-overall-label">賺錢機率</span>
+        </div>
+        <div class="prob-overall-divider">/</div>
+        <div class="prob-overall-item loss">
+          <span class="prob-overall-num">${loss}%</span>
+          <span class="prob-overall-label">賠錢機率</span>
+        </div>
+      </div>
+      <div class="prob-intervals">${intervalCards}</div>
+      <p class="prob-note">${esc(prob.說明 || "")}</p>
+    </section>`;
+}
+
 function renderAdvice(advice) {
   const tone = advice.tone || "neutral";
   const priceTone = advice.價位tone || "neutral";
@@ -255,6 +311,7 @@ function renderAdvice(advice) {
   const dimRows = (advice.dimensions || []).map((d) => toRow(d));
   const detailRows = (advice.details || []).map((d) => toRow(d));
   const candleSignals = advice.關鍵K棒 || [];
+  const probabilityBlock = renderEntryProbability(advice.入手機率);
   const candleBlock =
     candleSignals.length > 0
       ? `
@@ -305,6 +362,7 @@ function renderAdvice(advice) {
             <h3 class="panel-section-title">操作策略</h3>
             <p class="panel-intro">${esc(suggestion)}</p>
           </section>
+          ${probabilityBlock}
         </div>
 
         <div class="advice-col advice-col-right">
