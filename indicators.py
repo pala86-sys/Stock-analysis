@@ -32,11 +32,8 @@ def build_technical_summary(latest: pd.Series) -> dict:
     """建立技術面摘要字典"""
     latest_price = latest["Close"]
     return {
-        "MA5": round(latest["MA5"], 2),
-        "MA10": round(latest["MA10"], 2),
-        "MA20": round(latest["MA20"], 2),
-        "MA60": round(latest["MA60"], 2),
         "5日均線 (MA5)": round(latest["MA5"], 2),
+        "10日均線 (MA10)": round(latest["MA10"], 2),
         "20日月線 (MA20)": round(latest["MA20"], 2),
         "60日季線 (MA60)": round(latest["MA60"], 2),
         "技術短評": "股價在月線之上（偏多）" if latest_price > latest["MA20"] else "股價在月線之下（偏空）",
