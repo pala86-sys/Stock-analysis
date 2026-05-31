@@ -15,6 +15,7 @@ const statusEl = $("#status");
 const results = $("#results");
 const btnAnalyze = $("#btn-analyze");
 const btnReport = $("#btn-report");
+const tabSelect = $("#tab-select");
 
 let selectedStockId = "";
 let lastPayload = null;
@@ -47,11 +48,18 @@ function showPanel(name) {
   document.querySelectorAll(".panel").forEach((p) => {
     p.classList.toggle("active", p.id === `panel-${name}`);
   });
+  if (tabSelect && tabSelect.value !== name) {
+    tabSelect.value = name;
+  }
 }
 
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => showPanel(tab.dataset.tab));
 });
+
+if (tabSelect) {
+  tabSelect.addEventListener("change", () => showPanel(tabSelect.value));
+}
 
 input.addEventListener("input", () => {
   selectedStockId = "";

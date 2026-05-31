@@ -29,13 +29,24 @@
   </section>
 
   <main id="results" class="results hidden">
-    <nav class="tabs" id="tabs">
-      <button type="button" class="tab active" data-tab="advice">綜合評估</button>
-      <button type="button" class="tab" data-tab="profile">公司簡介</button>
-      <button type="button" class="tab" data-tab="fundamental">基本面</button>
-      <button type="button" class="tab" data-tab="technical">技術面</button>
-      <button type="button" class="tab" data-tab="chips">籌碼面</button>
-      <button type="button" class="tab" data-tab="news">消息面</button>
+    <nav class="tab-nav" id="tab-nav" aria-label="分析面向">
+      <label class="tab-select-label" for="tab-select">分析面向</label>
+      <select id="tab-select" class="tab-select">
+        <option value="advice">綜合評估</option>
+        <option value="profile">公司簡介</option>
+        <option value="fundamental">基本面</option>
+        <option value="technical">技術面</option>
+        <option value="chips">籌碼面</option>
+        <option value="news">消息面</option>
+      </select>
+      <div class="tabs" id="tabs">
+        <button type="button" class="tab active" data-tab="advice">綜合評估</button>
+        <button type="button" class="tab" data-tab="profile">公司簡介</button>
+        <button type="button" class="tab" data-tab="fundamental">基本面</button>
+        <button type="button" class="tab" data-tab="technical">技術面</button>
+        <button type="button" class="tab" data-tab="chips">籌碼面</button>
+        <button type="button" class="tab" data-tab="news">消息面</button>
+      </div>
     </nav>
 
     <div class="panels">
