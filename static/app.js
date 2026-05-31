@@ -28,7 +28,7 @@ function esc(s) {
 }
 
 function table(headers, rows) {
-  if (!rows || !rows.length) return '<p class="muted">無資料</p>';
+  if (!rows || !rows.length) return '<p class="panel-muted">無資料</p>';
   const head = headers.map((h) => `<th>${esc(h)}</th>`).join("");
   const body = rows
     .map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`)
@@ -201,13 +201,42 @@ function renderScoreRing(score) {
     </svg>`;
 }
 
+function panelPage(content) {
+  return `<div class="panel-page">${content}</div>`;
+}
+
+function panelHeader(title, subtitle = "") {
+  return `
+    <header class="panel-header">
+      <h2 class="panel-title">${esc(title)}</h2>
+      ${subtitle ? `<p class="panel-subtitle">${esc(subtitle)}</p>` : ""}
+    </header>`;
+}
+
+function panelSection(title, content) {
+  return `
+    <section class="panel-glass">
+      <h3 class="panel-section-title">${esc(title)}</h3>
+      ${content}
+    </section>`;
+}
+
+function panelError(msg) {
+  return panelPage(`<p class="panel-error">${esc(msg)}</p>`);
+}
+
+function formatAdviceTitle(display, code) {
+  if (!code || display.includes(code)) return display;
+  return `${display} (${code})`;
+}
+
 function renderAdvice(advice) {
   const tone = advice.tone || "neutral";
   const priceTone = advice.價位tone || "neutral";
   const display = advice.顯示名稱 || advice.公司名稱 || "—";
   const code = advice.公司代號 || "";
   const sub = advice.副標名稱 || "";
-  const title = code ? `${display} (${code})` : display;
+  const title = formatAdviceTitle(display, code);
   const priceRaw = advice.目前股價顯示 ? advice.目前股價顯示.replace(/\s*元$/, "") : "";
   const priceHero = priceRaw ? `NT$ ${priceRaw}` : "";
   const priceUnit = priceRaw ? "元" : "";
@@ -224,8 +253,8 @@ function renderAdvice(advice) {
   const valuationBlock =
     valLabel || valSummary || valMetrics
       ? `
-    <section class="advice-glass advice-valuation">
-      <h3 class="advice-section-title">估值評估</h3>
+    <section class="panel-glass advice-valuation">
+      <h3 class="panel-section-title">估值評估</h3>
       ${
         valLabel
           ? `<p class="advice-price-tag">目前價位：<span class="price-tag ${priceTone}">${esc(valLabel)}</span></p>`
@@ -236,28 +265,25 @@ function renderAdvice(advice) {
     </section>`
       : "";
 
-  $("#panel-advice").innerHTML = `
+  $("#panel-advice").innerHTML = panelPage(`
     <div class="advice-dashboard tone-${tone}">
-      <header class="advice-header">
-        <h2 class="advice-title">${esc(title)}</h2>
-        ${sub ? `<p class="advice-subtitle">${esc(sub)}</p>` : ""}
-      </header>
+      ${panelHeader(title, sub)}
 
       <div class="advice-grid">
         <div class="advice-col advice-col-left">
           ${valuationBlock}
-          <section class="advice-glass advice-entry">
-            <h3 class="advice-section-title">入手參考</h3>
+          <section class="panel-glass advice-entry">
+            <h3 class="panel-section-title">入手參考</h3>
             <span class="verdict-badge ${tone}">${esc(verdict)} ${verdictArrow}</span>
           </section>
-          <section class="advice-glass advice-strategy">
-            <h3 class="advice-section-title">操作策略</h3>
-            <p class="advice-strategy-text">${esc(suggestion)}</p>
+          <section class="panel-glass advice-strategy">
+            <h3 class="panel-section-title">操作策略</h3>
+            <p class="panel-intro">${esc(suggestion)}</p>
           </section>
         </div>
 
         <div class="advice-col advice-col-right">
-          <section class="advice-glass advice-hero">
+          <section class="panel-glass advice-hero">
             ${priceHero ? `<p class="hero-price-label">目前股價</p><p class="hero-price">${esc(priceHero)} <span>${esc(priceUnit)}</span></p>` : ""}
             <div class="hero-score-wrap">
               ${renderScoreRing(Number(totalScore) || 0)}
@@ -272,52 +298,57 @@ function renderAdvice(advice) {
         </div>
       </div>
 
-      <div class="advice-details">
-        <h3>各面向得分</h3>
-        ${table(["面向", "得分", "說明"], dimRows)}
-        <h3>評估細項</h3>
-        ${table(["項目", "評語", "加減"], detailRows)}
-        <p class="advice-disclaimer">${esc(advice.免責聲明 || "")}</p>
+      <div class="panel-details">
+        ${panelSection("各面向得分", table(["面向", "得分", "說明"], dimRows))}
+        ${panelSection("評估細項", table(["項目", "評語", "加減"], detailRows))}
+        <p class="panel-disclaimer">${esc(advice.免責聲明 || "")}</p>
       </div>
     </div>
-  `;
+  `);
 }
 
 function renderProfile(p) {
   if (p.錯誤) {
-    $("#panel-profile").innerHTML = `<p class="error">${esc(p.錯誤)}</p>`;
+    $("#panel-profile").innerHTML = panelError(p.錯誤);
     return;
   }
-  const themes = (p.themes || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("");
-  $("#panel-profile").innerHTML = `
-    <h2>${esc(p.公司名稱 || "")}（${esc(p.公司代號 || "")}）</h2>
-    <p class="muted">${esc(p.交易市場 || "")} ｜ ${esc(p.產業分類 || "")}</p>
-    ${table(
-      ["項目", "內容"],
-      [
-        ["員工人數", p.員工人數],
-        ["總部", p.總部],
-        ["官網", p.官網],
-      ]
+  const title = `${p.公司名稱 || ""}（${p.公司代號 || ""}）`;
+  const meta = `${p.交易市場 || ""} ｜ ${p.產業分類 || ""}`;
+  const themes = (p.themes || []).map((t) => `<span class="panel-tag">${esc(t)}</span>`).join("");
+  $("#panel-profile").innerHTML = panelPage(`
+    ${panelHeader(title, meta)}
+    ${panelSection(
+      "基本資訊",
+      table(
+        ["項目", "內容"],
+        [
+          ["員工人數", p.員工人數],
+          ["總部", p.總部],
+          ["官網", p.官網],
+        ]
+      )
     )}
-    <h3>投資題材</h3>
-    <div class="tags">${themes || '<span class="muted">待觀察</span>'}</div>
-    <h3>中文概況</h3>
-    <p class="intro">${esc(p.中文概況 || "")}</p>
+    ${panelSection(
+      "投資題材",
+      `<div class="panel-tags">${themes || '<span class="panel-muted">待觀察</span>'}</div>`
+    )}
+    ${panelSection("中文概況", `<p class="panel-intro">${esc(p.中文概況 || "")}</p>`)}
     ${
       p.原文摘要
-        ? `<h3>原文摘要</h3><p class="intro">${esc(p.原文摘要)}</p>`
+        ? panelSection("原文摘要", `<p class="panel-intro">${esc(p.原文摘要)}</p>`)
         : ""
     }
-  `;
+  `);
 }
 
 function renderFundamental(f) {
   if (f.錯誤) {
-    $("#panel-fundamental").innerHTML = `<p class="error">${esc(f.錯誤)}</p>`;
+    $("#panel-fundamental").innerHTML = panelError(f.錯誤);
     return;
   }
   const m = f.metrics || {};
+  const title = formatAdviceTitle(m.顯示名稱 || m.公司名稱 || "基本面分析", m.公司代號 || "");
+  const sub = m.副標名稱 || m.英文名稱 || "";
   const header = [
     ["公司名稱", m.公司名稱],
     ["公司代號", m.公司代號],
@@ -335,17 +366,18 @@ function renderFundamental(f) {
     r.期間, r["EPS(元)"], r["季增率(%)"], r["年增率(%)"],
   ]);
 
-  $("#panel-fundamental").innerHTML = `
-    <h3>基本資料</h3>${table(["指標", "數值"], header)}
-    <h3>估值指標</h3>${table(["指標", "數值"], valRows)}
-    <h3>每月營收</h3>${table(["期間", "營收(億)", "月增率(%)", "年增率(%)"], revRows)}
-    <h3>季 EPS</h3>${table(["期間", "EPS(元)", "季增率(%)", "年增率(%)"], epsRows)}
-  `;
+  $("#panel-fundamental").innerHTML = panelPage(`
+    ${panelHeader(title, sub)}
+    ${panelSection("基本資料", table(["指標", "數值"], header))}
+    ${panelSection("估值指標", table(["指標", "數值"], valRows))}
+    ${panelSection("每月營收", table(["期間", "營收(億)", "月增率(%)", "年增率(%)"], revRows))}
+    ${panelSection("季 EPS", table(["期間", "EPS(元)", "季增率(%)", "年增率(%)"], epsRows))}
+  `);
 }
 
 function renderTechnical(t, chartB64) {
   if (t.error) {
-    $("#panel-technical").innerHTML = `<p class="error">${esc(t.error)}</p>`;
+    $("#panel-technical").innerHTML = panelError(t.error);
     return;
   }
   const sumRows = Object.entries(t.summary || {}).map(([k, v]) => [k, v]);
@@ -354,22 +386,23 @@ function renderTechnical(t, chartB64) {
   (lv.supports || []).forEach((p, i) => srRows.push([`支撐 ${i + 1}`, p]));
   (lv.resistances || []).forEach((p, i) => srRows.push([`壓力 ${i + 1}`, p]));
 
-  $("#panel-technical").innerHTML = `
-    <h3>技術摘要</h3>${table(["指標", "數值"], sumRows)}
-    <h3>支撐 / 壓力</h3>${table(["價位", "數值"], srRows)}
-    ${
-      chartB64
-        ? `<img class="chart-img" src="data:image/png;base64,${chartB64}" alt="K線圖">`
-        : '<p class="muted">無法產生 K 線圖</p>'
-    }
-  `;
+  const chartBlock = chartB64
+    ? `<img class="chart-img" src="data:image/png;base64,${chartB64}" alt="K線圖">`
+    : '<p class="panel-muted">無法產生 K 線圖</p>';
+
+  $("#panel-technical").innerHTML = panelPage(`
+    ${panelHeader("技術面分析", "均線 · KD · MACD · 支撐壓力")}
+    ${panelSection("技術摘要", table(["指標", "數值"], sumRows))}
+    ${panelSection("支撐 / 壓力", table(["價位", "數值"], srRows))}
+    ${panelSection("K 線圖", chartBlock)}
+  `);
 }
 
 function renderChips(c) {
   const records = c.records || [];
   const summary = c.summary || {};
   if (!records.length || records[0].錯誤) {
-    $("#panel-chips").innerHTML = `<p class="error">${esc(records[0]?.錯誤 || "查無籌碼資料")}</p>`;
+    $("#panel-chips").innerHTML = panelError(records[0]?.錯誤 || "查無籌碼資料");
     return;
   }
   const sumRows = Object.entries(summary).map(([k, v]) => [k, v]);
@@ -380,15 +413,16 @@ function renderChips(c) {
     r["自營商買賣超(張)"],
     r["三大法人合計(張)"],
   ]);
-  $("#panel-chips").innerHTML = `
-    <h3>法人摘要</h3>${table(["項目", "狀態"], sumRows)}
-    <h3>每日明細</h3>${table(["日期", "外資", "投信", "自營商", "合計"], dailyRows)}
-  `;
+  $("#panel-chips").innerHTML = panelPage(`
+    ${panelHeader("籌碼面分析", "三大法人 · 外資 · 投信 · 自營商")}
+    ${panelSection("法人摘要", table(["項目", "狀態"], sumRows))}
+    ${panelSection("每日明細", table(["日期", "外資", "投信", "自營商", "合計"], dailyRows))}
+  `);
 }
 
 function renderNews(list) {
   if (!list || !list.length) {
-    $("#panel-news").innerHTML = '<p class="muted">查無新聞</p>';
+    $("#panel-news").innerHTML = panelPage('<p class="panel-muted">查無新聞</p>');
     return;
   }
   const cards = list
@@ -406,7 +440,12 @@ function renderNews(list) {
       </article>`;
     })
     .join("");
-  $("#panel-news").innerHTML = `<h3>最新消息</h3><div class="news-list">${cards}</div>`;
+  $("#panel-news").innerHTML = panelPage(`
+    ${panelHeader("消息面", "最新相關新聞與公告")}
+    <section class="panel-glass">
+      <div class="news-list">${cards}</div>
+    </section>
+  `);
 }
 
 function renderAll(data) {
