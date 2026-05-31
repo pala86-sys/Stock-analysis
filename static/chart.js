@@ -61,6 +61,7 @@
     let hoverIndex = -1;
     let levels = options.levels || {};
     let resizeObserver = null;
+    let cachedLayout = null;
 
     container.innerHTML = "";
     container.classList.add("chart-interactive");
@@ -180,10 +181,15 @@
       const w = measureWidth();
       const h = Math.min(Math.round(w * 0.72), 560);
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
-      canvas.style.width = `${w}px`;
-      canvas.style.height = `${h}px`;
+      const pixelW = Math.round(w * dpr);
+      const pixelH = Math.round(h * dpr);
+      if (canvas.width !== pixelW || canvas.height !== pixelH) {
+        canvas.width = pixelW;
+        canvas.height = pixelH;
+        canvas.style.width = `${w}px`;
+        canvas.style.height = `${h}px`;
+      }
+
       const ctx = canvas.getContext("2d");
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -204,7 +210,8 @@
         y += ph + gaps;
         return rect;
       });
-      return { ctx, w, h, padL, plotW, panels };
+      cachedLayout = { ctx, w, h, padL, plotW, panels };
+      return cachedLayout;
     }
 
     function yScale(min, max, top, height, val) {
@@ -235,7 +242,7 @@
           : null;
 
       ctx.fillStyle = BG;
-      ctx.fillRect(0, 0, w, canvas.height / (window.devicePixelRatio || 1));
+      ctx.fillRect(0, 0, w, h);
 
       const pricePanel = panels[0];
       const volPanel = panels[1];
@@ -409,8 +416,9 @@
 
     function indexFromEvent(clientX) {
       const bars = visibleBars();
+      if (!cachedLayout || !bars.length) return -1;
+      const { padL, plotW } = cachedLayout;
       const rect = canvas.getBoundingClientRect();
-      const { padL, plotW } = layout();
       const x = clientX - rect.left;
       if (x < padL || x > padL + plotW) return -1;
       const i = Math.floor(((x - padL) / plotW) * bars.length);
