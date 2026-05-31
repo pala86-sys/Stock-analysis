@@ -16,8 +16,8 @@ hiddenimports = [
     "stock_search_box",
     "http_client",
     "report_export",
-    "fpdf",
-    "fpdf.html",
+    "reportlab",
+    "reportlab.pdfbase.ttfonts",
     "valuation",
 ]
 
