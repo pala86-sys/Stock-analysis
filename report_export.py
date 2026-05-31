@@ -2,14 +2,21 @@
 
 import base64
 import html
+import shutil
+import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
 from fpdf import FPDF
+from fpdf.fonts import FontFace, TextStyle
+from fpdf.html import DEFAULT_TAG_STYLES
 
 from settings import resource_path
 
-NOTO_FONT = resource_path("assets/fonts/NotoSansTC-Regular.otf")
+FONT_FAMILY = "noto"
+NOTO_FONT_REL = "assets/fonts/NotoSansTC-Regular.otf"
+_resolved_font_path: Path | None = None
 
 
 def _esc(text) -> str:
@@ -28,19 +35,10 @@ def _table(headers: list[str], rows: list[list]) -> str:
 
 
 def _section(title: str, content: str) -> str:
-    return f'<section><h2>{_esc(title)}</h2>{content}</section>'
+    return f"<h2>{_esc(title)}</h2>{content}"
 
 
 def _advice_block(advice: dict) -> str:
-    tone = advice.get("tone", "neutral")
-    tone_class = {
-        "bull": "verdict-bull",
-        "mild_bull": "verdict-mild-bull",
-        "neutral": "verdict-neutral",
-        "mild_bear": "verdict-mild-bear",
-        "bear": "verdict-bear",
-    }.get(tone, "verdict-neutral")
-
     dim_rows = [
         [name, score, desc]
         for name, score, desc in advice.get("dimensions", [])
@@ -64,17 +62,15 @@ def _advice_block(advice: dict) -> str:
         name_html += f"<p class=\"price-level\">目前價位：{_esc(price_label)} ｜ {_esc(price_reason)}</p>"
 
     return f"""
-    <div class="card {tone_class}">
       {name_html}
-      <p class="verdict">入手參考：{_esc(advice.get("評等", ""))}</p>
-      <p class="score">綜合得分 {_esc(advice.get("綜合得分", ""))}</p>
-      <p class="suggestion">{_esc(advice.get("入手參考", ""))}</p>
-    </div>
+      <p><b>入手參考：</b>{_esc(advice.get("評等", ""))}</p>
+      <p><b>綜合得分</b> {_esc(advice.get("綜合得分", ""))}</p>
+      <p>{_esc(advice.get("入手參考", ""))}</p>
     <h3>各面向得分</h3>
     {_table(["面向", "得分", "說明"], dim_rows)}
     <h3>評估細項</h3>
     {_table(["項目", "評語", "加減"], detail_rows)}
-    <p class="disclaimer">{_esc(advice.get("免責聲明", ""))}</p>
+    <p><font size="8">{_esc(advice.get("免責聲明", ""))}</font></p>
     """
 
 
@@ -251,12 +247,40 @@ def _build_report_body_html(
     """
 
 
+def _noto_font_path() -> Path:
+    """取得 Noto 字型路徑（打包後複製到 temp 以避免 _MEIPASS 路徑問題）"""
+    global _resolved_font_path
+    if _resolved_font_path and _resolved_font_path.exists():
+        return _resolved_font_path
+
+    src = resource_path(NOTO_FONT_REL)
+    if not src.exists():
+        raise FileNotFoundError(f"找不到報告用字型：{src}")
+
+    if getattr(sys, "frozen", False):
+        dest = Path(tempfile.gettempdir()) / "StockObserver_NotoSansTC-Regular.otf"
+        if not dest.exists() or dest.stat().st_size != src.stat().st_size:
+            shutil.copyfile(src, dest)
+        _resolved_font_path = dest
+    else:
+        _resolved_font_path = src
+    return _resolved_font_path
+
+
+def _noto_tag_styles() -> dict:
+    styles: dict = {}
+    for key, style in DEFAULT_TAG_STYLES.items():
+        if isinstance(style, TextStyle):
+            styles[key] = style.replace(font_family=FONT_FAMILY)
+        elif isinstance(style, FontFace):
+            styles[key] = style.replace(family=FONT_FAMILY)
+    return styles
+
+
 def _register_noto_font(pdf: FPDF) -> None:
-    if not NOTO_FONT.exists():
-        raise FileNotFoundError(f"找不到報告用字型：{NOTO_FONT}")
-    font_path = str(NOTO_FONT)
-    pdf.add_font("Noto", "", font_path)
-    pdf.add_font("Noto", "B", font_path)
+    font_path = str(_noto_font_path())
+    pdf.add_font(FONT_FAMILY, "", font_path)
+    pdf.add_font(FONT_FAMILY, "B", font_path)
 
 
 def build_pdf_report(
@@ -284,9 +308,15 @@ def build_pdf_report(
     pdf = FPDF(orientation="P", unit="mm", format="A4")
     pdf.set_auto_page_break(auto=True, margin=15)
     _register_noto_font(pdf)
-    pdf.set_font("Noto", "", 10)
+    pdf.set_font(FONT_FAMILY, "", 10)
     pdf.add_page()
-    pdf.write_html(html_body)
+    pdf.write_html(
+        html_body,
+        font_family=FONT_FAMILY,
+        tag_styles=_noto_tag_styles(),
+        table_line_separators=True,
+        warn_on_tags_not_matching=False,
+    )
     return bytes(pdf.output())
 
 
