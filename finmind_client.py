@@ -116,7 +116,7 @@ def _request_once(params: dict, *, timeout: int) -> list | None:
 def request_finmind(stock_code: str, dataset: str, extra_params: dict) -> list | None:
     """發送 FinMind API 請求（僅對網路/5xx 重試，402/403 不重試）"""
     params = {"dataset": dataset, "data_id": stock_code, **extra_params}
-    max_retries = 2
+    max_retries = 3
     last_error: Exception | None = None
 
     for attempt in range(max_retries):
@@ -136,7 +136,7 @@ def request_finmind(stock_code: str, dataset: str, extra_params: dict) -> list |
 def request_finmind_stock_list() -> list[dict]:
     """取得全部台股清單"""
     params = {"dataset": "TaiwanStockInfo", "data_id": ""}
-    max_retries = 2
+    max_retries = 3
     last_error: Exception | None = None
 
     for attempt in range(max_retries):
@@ -157,7 +157,7 @@ def request_finmind_stock_list() -> list[dict]:
 def request_finmind_delisted_stock_ids() -> set[str]:
     """取得已下市櫃股票代號"""
     params = {"dataset": "TaiwanStockDelisting", "data_id": ""}
-    max_retries = 2
+    max_retries = 3
     last_error: Exception | None = None
 
     for attempt in range(max_retries):

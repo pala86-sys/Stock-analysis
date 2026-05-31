@@ -111,9 +111,9 @@ class StockAnalyzer:
         """獲取基本面數據（PER/PBR/殖利率 + 歷史營收與 EPS）"""
         try:
             info = self._source.get_info()
-            price = info.get("regularMarketPrice") or info.get("previousClose")
-            if not info or not price:
-                raise ValueError("無法取得該股票的基本面資料")
+            price = self._source.refresh_market_price()
+            if price is None:
+                raise ValueError("無法取得該股票的股價（Yahoo 與 K 線皆無資料）")
 
             finmind = self._source.get_finmind_per()
             raw_pe = pick_metric(

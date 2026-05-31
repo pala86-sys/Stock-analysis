@@ -10,6 +10,10 @@ dist/
 settings.json
 stock_list_cache.json
 
+# 開發測試產物
+scripts/_*
+scripts/render_*
+
 # Android 打包（勿提交產物與機密）
 mobile/node_modules/
 mobile/www/

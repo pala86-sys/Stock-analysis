@@ -149,7 +149,11 @@ class StockDataSource:
         self._run_preload(on_ready=on_ready)
 
     def _fetch_yfinance_info(self):
-        return call_with_retry(lambda: self.ticker.info or {})
+        return call_with_retry(
+            lambda: self.ticker.info or {},
+            max_retries=4,
+            backoff=2.0,
+        )
 
     def _fetch_yfinance_history(self):
         return call_with_retry(lambda: self.ticker.history(period="1y"))
@@ -232,8 +236,62 @@ class StockDataSource:
             except Exception as exc:
                 _store(key, None, exc)
 
+        self._retry_failed_preload(yahoo_tasks, finmind_tasks)
+
         self._preloaded = True
         self._preload_in_progress = False
+
+    def _retry_failed_preload(self, yahoo_tasks: dict, finmind_tasks: dict) -> None:
+        """預載結束後再試一次失敗的來源（網路偶發失敗時，避免使用者需手動重查）"""
+        for key in list(self._errors.keys()):
+            err = str(self._errors[key]).lower()
+            if any(token in err for token in ("402", "403", "quota", "banned", "upper limit", "配額")):
+                continue
+            if finmind_quota_exhausted() and key.startswith("finmind"):
+                continue
+            task = yahoo_tasks.get(key) or finmind_tasks.get(key)
+            if not task:
+                continue
+            try:
+                self._cache[key] = task()
+                del self._errors[key]
+            except Exception as exc:
+                self._errors[key] = str(exc)
+
+    def _price_from_info(self, info: dict) -> float | None:
+        for key in ("regularMarketPrice", "previousClose", "currentPrice", "open"):
+            value = info.get(key)
+            if isinstance(value, (int, float)) and value > 0:
+                return float(value)
+        return None
+
+    def get_market_price(self) -> float | None:
+        """目前股價：Yahoo info 優先，失敗時改用最後收盤價"""
+        self._ensure_preloaded()
+        price = self._price_from_info(self._cache.get("info") or {})
+        if price is not None:
+            return price
+
+        history = self.get_history()
+        if not history.empty and "Close" in history.columns:
+            closes = history["Close"].dropna()
+            if not closes.empty:
+                last = float(closes.iloc[-1])
+                if last > 0:
+                    return last
+        return None
+
+    def refresh_market_price(self) -> float | None:
+        """info 無股價時再向 Yahoo 重試一次"""
+        price = self.get_market_price()
+        if price is not None:
+            return price
+        try:
+            self._cache["info"] = self._fetch_yfinance_info()
+            self._errors.pop("info", None)
+        except Exception as exc:
+            self._errors["info"] = str(exc)
+        return self.get_market_price()
 
     def _ensure_preloaded(self):
         if not self._preloaded and not self._preload_in_progress:
