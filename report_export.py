@@ -1,7 +1,7 @@
 """分析報告匯出（PDF）"""
 
+import base64
 import html
-import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -268,34 +268,26 @@ def build_pdf_report(
     data_errors: list[str] | None = None,
 ) -> bytes:
     """由分析結果產生 PDF 報告"""
-    chart_file: Path | None = None
-    try:
-        chart_img_html = ""
-        if chart_png_bytes:
-            tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-            tmp.write(chart_png_bytes)
-            tmp.close()
-            chart_file = Path(tmp.name)
-            chart_img_html = f'<img src="{chart_file.resolve().as_uri()}" width="700" alt="K 線圖">'
+    chart_img_html = ""
+    if chart_png_bytes:
+        b64 = base64.b64encode(chart_png_bytes).decode("ascii")
+        chart_img_html = f'<img src="data:image/png;base64,{b64}" width="700" alt="K 線圖">'
 
-        html_body = _build_report_body_html(
-            stock_id,
-            advice,
-            sections,
-            chart_img_html=chart_img_html,
-            data_errors=data_errors,
-        )
+    html_body = _build_report_body_html(
+        stock_id,
+        advice,
+        sections,
+        chart_img_html=chart_img_html,
+        data_errors=data_errors,
+    )
 
-        pdf = FPDF(orientation="P", unit="mm", format="A4")
-        pdf.set_auto_page_break(auto=True, margin=15)
-        _register_noto_font(pdf)
-        pdf.set_font("Noto", "", 10)
-        pdf.add_page()
-        pdf.write_html(html_body)
-        return bytes(pdf.output())
-    finally:
-        if chart_file:
-            chart_file.unlink(missing_ok=True)
+    pdf = FPDF(orientation="P", unit="mm", format="A4")
+    pdf.set_auto_page_break(auto=True, margin=15)
+    _register_noto_font(pdf)
+    pdf.set_font("Noto", "", 10)
+    pdf.add_page()
+    pdf.write_html(html_body)
+    return bytes(pdf.output())
 
 
 def export_pdf_report(
