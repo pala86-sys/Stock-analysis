@@ -19,6 +19,7 @@ const tabSelect = $("#tab-select");
 
 let selectedStockId = "";
 let lastPayload = null;
+let lastAdvice = null;
 let debounceTimer = null;
 
 function esc(s) {
@@ -480,6 +481,7 @@ async function analyze() {
     if (!res.ok) throw new Error(data.detail || "分析失敗");
 
     lastPayload = { stock_id: selectedStockId, query: data.stock_id || query };
+    lastAdvice = data.advice || null;
     renderAll(data);
     input.value = data.stock_id || query;
     selectedStockId = data.stock_id || "";
@@ -493,6 +495,36 @@ async function analyze() {
   } finally {
     btnAnalyze.disabled = false;
   }
+}
+
+function parseDownloadFilename(res, fallback) {
+  const cd = res.headers.get("Content-Disposition") || "";
+  const utf8 = cd.match(/filename\*=UTF-8''([^;\s]+)/i);
+  if (utf8) {
+    try {
+      return decodeURIComponent(utf8[1]);
+    } catch {
+      /* ignore */
+    }
+  }
+  const plain = cd.match(/filename="([^"]+)"/i);
+  if (plain) return plain[1];
+  return fallback;
+}
+
+function reportFilenameFromAdvice(stockId, advice) {
+  const sid = String(stockId || "").trim();
+  let name = String(advice?.公司名稱 || "").trim();
+  if (!name) {
+    let display = String(advice?.顯示名稱 || "").trim();
+    for (const token of [`（${sid}）`, `(${sid})`, sid]) {
+      display = display.replaceAll(token, "");
+    }
+    name = display.replace(/^[（(]|[）)]$/g, "").trim();
+  }
+  if (!name) name = sid;
+  const safe = (s) => String(s).replace(/[\\/:*?"<>|\n\r\t]/g, "");
+  return `${safe(sid)}${safe(name)}報告.pdf`;
 }
 
 async function downloadReport() {
@@ -513,7 +545,11 @@ async function downloadReport() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${lastPayload.query || lastPayload.stock_id}_report.pdf`;
+    const fallback = reportFilenameFromAdvice(
+      lastPayload.stock_id || lastPayload.query,
+      lastAdvice,
+    );
+    a.download = parseDownloadFilename(res, fallback);
     a.click();
     URL.revokeObjectURL(url);
     setStatus("報告已下載");

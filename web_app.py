@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from report_export import report_download_filename
 from web_service import (
     build_report_pdf,
     get_stock_suggestions,
@@ -75,11 +76,18 @@ def api_report(body: AnalyzeRequest):
     try:
         result = run_analysis(stock_id, display_days=body.display_days)
         pdf_bytes = build_report_pdf(stock_id, result)
-        filename = f"{stock_id}_report.pdf"
+        advice = result.get("advice") or {}
+        filename = report_download_filename(stock_id, advice)
+        ascii_name = f"{stock_id}_report.pdf"
+        encoded = quote(filename)
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+            headers={
+                "Content-Disposition": (
+                    f'attachment; filename="{ascii_name}"; filename*=UTF-8\'\'{encoded}'
+                ),
+            },
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"報告產生失敗：{exc}") from exc

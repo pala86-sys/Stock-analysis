@@ -132,8 +132,20 @@ def _get_styles() -> dict[str, ParagraphStyle]:
             textColor=colors.HexColor("#888888"),
             spaceBefore=6,
         ),
+        "tablecell": ParagraphStyle(
+            "tablecell",
+            fontName=FONT_NORMAL,
+            fontSize=8,
+            leading=11,
+            wordWrap="CJK",
+        ),
     }
     return _styles
+
+
+def _cell_para(text: str) -> Paragraph:
+    styles = _get_styles()
+    return Paragraph(escape(_text(text)), styles["tablecell"])
 
 
 def _para(text: str, style_key: str = "body") -> Paragraph:
@@ -141,15 +153,29 @@ def _para(text: str, style_key: str = "body") -> Paragraph:
     return Paragraph(escape(_text(text)), styles[style_key])
 
 
-def _table(headers: list[str], rows: list[list]) -> Table | Paragraph:
+def _table(
+    headers: list[str],
+    rows: list[list],
+    *,
+    col_widths: list[float] | None = None,
+    wrap_cols: set[int] | None = None,
+) -> Table | Paragraph:
     if not rows:
         return _para("無資料", "muted")
 
+    wrap_cols = wrap_cols or set()
     data = [headers] + [[_text(c) for c in row] for row in rows]
-    col_count = len(headers)
+    for row_idx in range(1, len(data)):
+        for col_idx in wrap_cols:
+            if col_idx < len(data[row_idx]):
+                data[row_idx][col_idx] = _cell_para(data[row_idx][col_idx])
+
     usable = 170 * mm
-    col_width = usable / col_count if col_count else usable
-    table = Table(data, colWidths=[col_width] * col_count, repeatRows=1)
+    if col_widths is None:
+        col_count = len(headers)
+        col_widths = [usable / col_count] * col_count if col_count else [usable]
+
+    table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(
         TableStyle(
             [
@@ -344,7 +370,32 @@ def _news_block(news: list) -> list:
         ]
         for i, n in enumerate(news, 1)
     ]
-    return [_table(["#", "標題", "來源", "發布時間", "連結"], rows)]
+    usable = 170 * mm
+    return [
+        _table(
+            ["#", "標題", "來源", "發布時間", "連結"],
+            rows,
+            col_widths=[10 * mm, 52 * mm, 28 * mm, 30 * mm, usable - 120 * mm],
+            wrap_cols={1, 2, 4},
+        )
+    ]
+
+
+def report_download_filename(stock_id: str, advice: dict) -> str:
+    """下載檔名：股票代碼 + 股票名稱 + 報告.pdf"""
+    sid = _text(stock_id).strip()
+    name = _text(advice.get("公司名稱")).strip()
+    if not name:
+        display = _text(advice.get("顯示名稱")).strip()
+        for token in (f"（{sid}）", f"({sid})", sid):
+            display = display.replace(token, "")
+        name = display.strip(" 　（）()")
+    if not name:
+        name = sid
+    for ch in '\\/:*?"<>|\n\r\t':
+        sid = sid.replace(ch, "")
+        name = name.replace(ch, "")
+    return f"{sid}{name}報告.pdf"
 
 
 def _chart_block(chart_png_bytes: bytes) -> list:

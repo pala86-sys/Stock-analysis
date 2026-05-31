@@ -9,7 +9,7 @@ from charts import TechnicalChart
 from settings import load_last_stock, save_last_stock
 from widgets import AdviceTab, ChipsTab, FundamentalTab, ProfileTab, TabTable, configure_table_styles
 from advice import build_investment_advice
-from report_export import export_pdf_report
+from report_export import export_pdf_report, report_download_filename
 from stock_search import preload_stock_list
 from stock_search_box import StockSearchBox
 
@@ -310,8 +310,7 @@ class StockApp:
             messagebox.showwarning("提示", "請先完成股票分析再匯出報告。")
             return
 
-        company = self._last_advice.get("顯示名稱") or self._last_advice.get("公司名稱") or self._current_stock_id
-        default_name = f"{self._current_stock_id}_{company}_報告.pdf".replace("/", "_")
+        default_name = report_download_filename(self._current_stock_id, self._last_advice)
 
         path = filedialog.asksaveasfilename(
             title="匯出 PDF 報告",
