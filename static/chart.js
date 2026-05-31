@@ -22,6 +22,10 @@
     return Number(v).toFixed(digits);
   }
 
+  function fmtPrice(v) {
+    return fmt(v, 2);
+  }
+
   function fmtVol(v) {
     if (v == null) return "--";
     return Math.round(v).toLocaleString("zh-TW");
@@ -243,23 +247,36 @@
       }
       const up = row.close >= row.open;
       const volColor = up ? UP : DOWN;
-      const cols = [
-        ["開盤", row.open, "MA5", row.MA5, MA_COLORS.MA5],
-        ["最高", row.high, "MA10", row.MA10, MA_COLORS.MA10],
-        ["最低", row.low, "MA20", row.MA20, MA_COLORS.MA20],
-        ["收盤", row.close, "MA60", row.MA60, MA_COLORS.MA60],
-      ];
+      const ohlcColor = up ? UP : DOWN;
       probeBar.innerHTML = `
-        <span class="probe-date">${row.date}</span>
-        <span class="probe-vol" style="color:${volColor}">成交量 ${fmtVol(row.volume)}</span>
-        ${cols
-          .map(
-            ([ol, ov, mk, mv, c]) =>
-              `<span class="probe-col"><b style="color:${c}">${ol} ${fmt(ov)}</b> <span style="color:${c}">${mk} ${fmt(mv)}</span></span>`
-          )
-          .join("")}
-        <span class="probe-kd">K:${fmt(row.K, 1)} D:${fmt(row.D, 1)}${kdStatus(row.K, row.D)}</span>
-        <span class="probe-macd">DIF:${fmt(row.DIF)} DEA:${fmt(row.DEA)} MACD:${fmt(row.MACD_hist)}</span>
+        <div class="probe-group">
+          <span class="probe-label">日期</span>
+          <span class="probe-date">${row.date}</span>
+        </div>
+        <div class="probe-group">
+          <span class="probe-label">成交量</span>
+          <span class="probe-vol" style="color:${volColor}">${fmtVol(row.volume)}</span>
+        </div>
+        <div class="probe-group probe-group-wide">
+          <span class="probe-label">開盤價</span><span style="color:${ohlcColor}">${fmtPrice(row.open)}</span>
+          <span class="probe-label">最高價</span><span style="color:${ohlcColor}">${fmtPrice(row.high)}</span>
+          <span class="probe-label">最低價</span><span style="color:${ohlcColor}">${fmtPrice(row.low)}</span>
+          <span class="probe-label">收盤價</span><span style="color:${ohlcColor}">${fmtPrice(row.close)}</span>
+        </div>
+        <div class="probe-group probe-group-wide">
+          <span class="probe-label">MA5</span><span style="color:${MA_COLORS.MA5}">${fmtPrice(row.MA5)}</span>
+          <span class="probe-label">MA10</span><span style="color:${MA_COLORS.MA10}">${fmtPrice(row.MA10)}</span>
+          <span class="probe-label">MA20</span><span style="color:${MA_COLORS.MA20}">${fmtPrice(row.MA20)}</span>
+          <span class="probe-label">MA60</span><span style="color:${MA_COLORS.MA60}">${fmtPrice(row.MA60)}</span>
+        </div>
+        <div class="probe-group">
+          <span class="probe-label">KD</span>
+          <span class="probe-kd">K ${fmt(row.K, 1)} · D ${fmt(row.D, 1)}${kdStatus(row.K, row.D)}</span>
+        </div>
+        <div class="probe-group probe-group-wide">
+          <span class="probe-label">MACD</span>
+          <span class="probe-macd">DIF ${fmt(row.DIF)} · DEA ${fmt(row.DEA)} · MACD ${fmt(row.MACD_hist)}</span>
+        </div>
       `;
     }
 
@@ -287,8 +304,8 @@
       const ctx = canvas.getContext("2d");
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const padL = 52;
-      const padR = 54;
+      const padL = 78;
+      const padR = 72;
       const padT = 8;
       const padB = 8;
       const plotW = w - padL - padR;
@@ -417,13 +434,13 @@
       const levelLabels = [
         ...(levels.supports || []).map((s, i) => ({
           lineY: yScale(pMin, pMax, pricePanel.y, pricePanel.h, s),
-          text: `支撐${i + 1} ${fmt(s)}`,
+          text: `支撐${i + 1} ${fmtPrice(s)}`,
           color: DOWN,
           side: "left",
         })),
         ...(levels.resistances || []).map((r, i) => ({
           lineY: yScale(pMin, pMax, pricePanel.y, pricePanel.h, r),
-          text: `壓力${i + 1} ${fmt(r)}`,
+          text: `壓力${i + 1} ${fmtPrice(r)}`,
           color: UP,
           side: "right",
         })),
@@ -501,8 +518,8 @@
       ctx.font = "10px sans-serif";
       ctx.textAlign = "right";
       ctx.textBaseline = "middle";
-      ctx.fillText(fmt(pMax), padL - 6, pricePanel.y + 10);
-      ctx.fillText(fmt(pMin), padL - 6, pricePanel.y + pricePanel.h - 4);
+      ctx.fillText(fmtPrice(pMax), padL - 6, pricePanel.y + 10);
+      ctx.fillText(fmtPrice(pMin), padL - 6, pricePanel.y + pricePanel.h - 4);
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
 

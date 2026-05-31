@@ -953,8 +953,8 @@ th { background: rgba(255, 255, 255, 0.06); white-space: nowrap; color: rgba(232
 
 .chart-probe-bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
+  flex-direction: column;
+  gap: 6px;
   font-size: 0.78rem;
   line-height: 1.5;
   padding: 8px 10px;
@@ -965,13 +965,32 @@ th { background: rgba(255, 255, 255, 0.06); white-space: nowrap; color: rgba(232
   color: var(--text);
 }
 
+.probe-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.probe-group-wide {
+  gap: 4px 14px;
+}
+
+.probe-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  min-width: 2.8em;
+}
+
 .chart-probe-bar .probe-date {
   font-weight: 600;
   color: var(--primary);
 }
 
-.chart-probe-bar .probe-col b {
-  margin-right: 4px;
+.chart-probe-bar .probe-vol,
+.chart-probe-bar .probe-kd,
+.chart-probe-bar .probe-macd {
+  color: rgba(232, 244, 255, 0.92);
 }
 
 .chart-canvas-wrap {
