@@ -108,39 +108,178 @@ function toRow(item) {
   return [item];
 }
 
+const ADVICE_TONE_LABEL = {
+  bull: "偏多",
+  mild_bull: "中性偏多",
+  neutral: "中性",
+  mild_bear: "中性偏空",
+  bear: "偏空",
+};
+
+const ADVICE_TONE_ARROW = {
+  bull: "↑",
+  mild_bull: "↗",
+  neutral: "→",
+  mild_bear: "↘",
+  bear: "↓",
+};
+
+function ratioBarFill(name, value) {
+  const num = parseFloat(String(value).replace(/,/g, ""));
+  if (Number.isNaN(num)) return 50;
+  if (name.includes("PE")) return Math.min(100, Math.max(12, (num / 40) * 100));
+  return Math.min(100, Math.max(12, (num / 8) * 100));
+}
+
+function scoreArcOffset(score, min = -6, max = 12) {
+  const pct = Math.min(1, Math.max(0, (score - min) / (max - min)));
+  const circumference = 2 * Math.PI * 52;
+  return circumference * (1 - pct);
+}
+
+function dimBarHeight(score) {
+  return Math.min(100, Math.max(12, ((score + 4) / 12) * 100));
+}
+
+function dimStars(score) {
+  if (score >= 4) return "★★★";
+  if (score >= 2) return "★★";
+  if (score >= 0) return "★";
+  return "☆";
+}
+
+function renderValuationMetrics(indicators) {
+  if (!indicators || !indicators.length) return "";
+  return indicators
+    .map((item) => {
+      const fill = ratioBarFill(item.名稱, item.數值);
+      const level = item.level || "neutral";
+      return `
+        <div class="ratio-row">
+          <div class="ratio-head">
+            <span class="ratio-name">${esc(item.名稱)}</span>
+            <span class="ratio-value">${esc(item.數值)} <em class="ratio-status ${level}">(${esc(item.狀態)})</em></span>
+          </div>
+          <div class="ratio-track"><span class="ratio-fill ${level}" style="width:${fill}%"></span></div>
+        </div>`;
+    })
+    .join("");
+}
+
+function renderDimBars(dimensions) {
+  if (!dimensions || !dimensions.length) return "";
+  return dimensions
+    .map((d) => {
+      const row = toRow(d);
+      const name = row[0] || "";
+      const score = Number(row[1]) || 0;
+      return `
+        <div class="dim-mini">
+          <div class="dim-mini-bar"><span style="height:${dimBarHeight(score)}%"></span></div>
+          <p class="dim-mini-name">${esc(name)}</p>
+          <p class="dim-mini-stars">${dimStars(score)}</p>
+        </div>`;
+    })
+    .join("");
+}
+
+function renderScoreRing(score) {
+  const offset = scoreArcOffset(score);
+  const circumference = 2 * Math.PI * 52;
+  return `
+    <svg class="score-ring" viewBox="0 0 120 120" aria-hidden="true">
+      <defs>
+        <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#4fd1ff"/>
+          <stop offset="100%" stop-color="#ffd166"/>
+        </linearGradient>
+      </defs>
+      <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="9"/>
+      <circle cx="60" cy="60" r="52" fill="none" stroke="url(#scoreGrad)" stroke-width="9"
+        stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
+        transform="rotate(-90 60 60)"/>
+    </svg>`;
+}
+
 function renderAdvice(advice) {
   const tone = advice.tone || "neutral";
   const priceTone = advice.價位tone || "neutral";
-  const priceMap = { cheap: "cheap", fair: "fair", expensive: "expensive" };
   const display = advice.顯示名稱 || advice.公司名稱 || "—";
+  const code = advice.公司代號 || "";
   const sub = advice.副標名稱 || "";
-  const priceLine =
-    advice.目前股價顯示
-      ? `<p class="stock-price">目前股價：${esc(advice.目前股價顯示)}</p>`
-      : "";
-  const valuationLine =
-    advice.價位評估 && advice.價位評估 !== "無法判定"
-      ? `<p class="price-level ${priceMap[priceTone] || ""}">目前價位：${esc(advice.價位評估)} ｜ ${esc(advice.價位說明)}</p>`
-      : "";
-
+  const title = code ? `${display} (${code})` : display;
+  const priceRaw = advice.目前股價顯示 ? advice.目前股價顯示.replace(/\s*元$/, "") : "";
+  const priceHero = priceRaw ? `NT$ ${priceRaw}` : "";
+  const priceUnit = priceRaw ? "元" : "";
+  const valLabel = advice.價位評估 && advice.價位評估 !== "無法判定" ? advice.價位評估 : "";
+  const valSummary = advice.估值摘要 || "";
+  const valMetrics = renderValuationMetrics(advice.估值指標);
+  const verdict = advice.評等 || ADVICE_TONE_LABEL[tone] || "—";
+  const verdictArrow = ADVICE_TONE_ARROW[tone] || "→";
+  const totalScore = advice.綜合得分 ?? "—";
+  const suggestion = advice.入手參考 || "";
   const dimRows = (advice.dimensions || []).map((d) => toRow(d));
   const detailRows = (advice.details || []).map((d) => toRow(d));
 
+  const valuationBlock =
+    valLabel || valSummary || valMetrics
+      ? `
+    <section class="advice-glass advice-valuation">
+      <h3 class="advice-section-title">估值評估</h3>
+      ${
+        valLabel
+          ? `<p class="advice-price-tag">目前價位：<span class="price-tag ${priceTone}">${esc(valLabel)}</span></p>`
+          : ""
+      }
+      ${valSummary ? `<p class="advice-val-summary">${esc(valSummary)}</p>` : ""}
+      ${valMetrics}
+    </section>`
+      : "";
+
   $("#panel-advice").innerHTML = `
-    <div class="card ${tone}">
-      <p class="company">${esc(display)}</p>
-      ${sub ? `<p class="sub">${esc(sub)}</p>` : ""}
-      ${priceLine}
-      ${valuationLine}
-      <h2>入手參考：${esc(advice.評等)}</h2>
-      <p>綜合得分 ${esc(advice.綜合得分)}（基本面 + 技術面 + 籌碼面）</p>
-      <p>${esc(advice.入手參考)}</p>
+    <div class="advice-dashboard tone-${tone}">
+      <header class="advice-header">
+        <h2 class="advice-title">${esc(title)}</h2>
+        ${sub ? `<p class="advice-subtitle">${esc(sub)}</p>` : ""}
+      </header>
+
+      <div class="advice-grid">
+        <div class="advice-col advice-col-left">
+          ${valuationBlock}
+          <section class="advice-glass advice-entry">
+            <h3 class="advice-section-title">入手參考</h3>
+            <span class="verdict-badge ${tone}">${esc(verdict)} ${verdictArrow}</span>
+          </section>
+          <section class="advice-glass advice-strategy">
+            <h3 class="advice-section-title">操作策略</h3>
+            <p class="advice-strategy-text">${esc(suggestion)}</p>
+          </section>
+        </div>
+
+        <div class="advice-col advice-col-right">
+          <section class="advice-glass advice-hero">
+            ${priceHero ? `<p class="hero-price-label">目前股價</p><p class="hero-price">${esc(priceHero)} <span>${esc(priceUnit)}</span></p>` : ""}
+            <div class="hero-score-wrap">
+              ${renderScoreRing(Number(totalScore) || 0)}
+              <div class="hero-score-text">
+                <span class="hero-score-num">${esc(String(totalScore))}</span>
+                <span class="hero-score-label">綜合得分</span>
+              </div>
+            </div>
+            <p class="hero-score-note">（基本面 + 技術面 + 籌碼面）</p>
+            <div class="dim-mini-row">${renderDimBars(advice.dimensions)}</div>
+          </section>
+        </div>
+      </div>
+
+      <div class="advice-details">
+        <h3>各面向得分</h3>
+        ${table(["面向", "得分", "說明"], dimRows)}
+        <h3>評估細項</h3>
+        ${table(["項目", "評語", "加減"], detailRows)}
+        <p class="advice-disclaimer">${esc(advice.免責聲明 || "")}</p>
+      </div>
     </div>
-    <h3>各面向得分</h3>
-    ${table(["面向", "得分", "說明"], dimRows)}
-    <h3>評估細項</h3>
-    ${table(["項目", "評語", "加減"], detailRows)}
-    <p class="muted">${esc(advice.免責聲明 || "")}</p>
   `;
 }
 

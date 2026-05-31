@@ -25,6 +25,40 @@ def _numeric(val) -> float | None:
     return None
 
 
+_STATUS_LEVEL = {"偏低": "low", "合理": "ok", "偏高": "warn", "過高": "bad"}
+
+
+def _build_valuation_display(metrics: dict) -> tuple[str, list[dict]]:
+    """解析估值摘要與 PE/PB 指標，供前端儀表板顯示"""
+    reason = metrics.get("價位說明", "") or ""
+    prefix = reason.split("（", 1)[0] if "（" in reason else reason
+    indicators: list[dict] = []
+
+    raw_pe = metrics.get("本益比 (PE)")
+    if raw_pe not in (None, "", "0（無獲利）"):
+        if (pe := valid_ratio(raw_pe)) is not None:
+            _, note, _ = pe_detail_note(pe)
+            status = note.replace(f"PE {pe:g} ", "")
+            indicators.append({
+                "名稱": "本益比 PE",
+                "數值": f"{pe:g}",
+                "狀態": status,
+                "level": _STATUS_LEVEL.get(status, "neutral"),
+            })
+
+    if (pb := valid_ratio(metrics.get("股價淨值比 (PB)"))) is not None:
+        _, note, _ = pb_detail_note(pb)
+        status = note.replace(f"PB {pb:g} ", "")
+        indicators.append({
+            "名稱": "股價淨值比 PB",
+            "數值": f"{pb:g}",
+            "狀態": status,
+            "level": _STATUS_LEVEL.get(status, "neutral"),
+        })
+
+    return prefix, indicators
+
+
 def _format_stock_price(val) -> str:
     """格式化查詢當下股價"""
     if val in (None, "", "無資料"):
@@ -308,6 +342,7 @@ def build_investment_advice(
 
     price_raw = metrics.get("目前股價")
     price_text = _format_stock_price(price_raw)
+    val_summary, val_indicators = _build_valuation_display(metrics)
 
     return {
         "公司名稱": company,
@@ -320,6 +355,8 @@ def build_investment_advice(
         "價位評估": metrics.get("價位評估", ""),
         "價位說明": metrics.get("價位說明", ""),
         "價位tone": metrics.get("價位tone", "neutral"),
+        "估值摘要": val_summary,
+        "估值指標": val_indicators,
         "綜合得分": total,
         "評等": verdict,
         "入手參考": suggestion,
