@@ -53,7 +53,7 @@
   }
 
   function resolveLabelOverlap(items, minGap, minY, maxY) {
-    if (items.length <= 1) return items;
+    if (items.length <= 1) return items.map((item) => ({ ...item }));
     const sorted = items.map((item) => ({ ...item }));
     sorted.sort((a, b) => a.y - b.y);
     for (let i = 1; i < sorted.length; i++) {
@@ -72,28 +72,72 @@
     return sorted;
   }
 
-  function drawLevelLabels(ctx, items, panel, padL, plotW, defaultSide) {
-    if (!items.length) return;
-    const minGap = 13;
-    const minY = panel.y + 10;
-    const maxY = panel.y + panel.h - 4;
-    const placed = items.map((item) => ({ ...item, side: defaultSide }));
+  function drawAllLevelLabels(ctx, labels, panel, padL, plotW) {
+    if (!labels.length) return;
 
-    if (placed.length === 2 && Math.abs(placed[0].y - placed[1].y) < minGap) {
-      placed[0].side = defaultSide;
-      placed[1].side = defaultSide === "left" ? "right" : "left";
-    } else {
-      const resolved = resolveLabelOverlap(placed, minGap, minY, maxY);
-      placed.splice(0, placed.length, ...resolved);
+    const minGap = 14;
+    const minY = panel.y + 8;
+    const maxY = panel.y + panel.h - 6;
+    const leftX = padL + 4;
+    const rightX = padL + plotW - 4;
+
+    const leftItems = labels
+      .filter((l) => l.side === "left")
+      .sort((a, b) => a.lineY - b.lineY)
+      .map((l) => ({ ...l, labelY: l.lineY }));
+    const rightItems = labels
+      .filter((l) => l.side === "right")
+      .sort((a, b) => a.lineY - b.lineY)
+      .map((l) => ({ ...l, labelY: l.lineY }));
+
+    function spreadSide(items) {
+      if (items.length <= 1) return items;
+      const required = (items.length - 1) * minGap;
+      const span = items[items.length - 1].lineY - items[0].lineY;
+      if (span >= required) {
+        const resolved = resolveLabelOverlap(
+          items.map((it) => ({ ...it, y: it.labelY })),
+          minGap,
+          minY,
+          maxY
+        );
+        return items.map((it, i) => ({ ...it, labelY: resolved[i].y }));
+      }
+      const totalH = Math.min(maxY - minY, Math.max(required, span));
+      let startY = (items[0].lineY + items[items.length - 1].lineY) / 2 - totalH / 2;
+      startY = Math.max(minY, Math.min(startY, maxY - totalH));
+      return items.map((it, i) => ({ ...it, labelY: startY + i * minGap }));
     }
+
+    const placed = [...spreadSide(leftItems), ...spreadSide(rightItems)];
 
     ctx.font = "10px sans-serif";
     placed.forEach((item) => {
+      const x = item.side === "right" ? rightX : leftX;
+      const align = item.side === "right" ? "right" : "left";
+
+      if (Math.abs(item.labelY - item.lineY) > 2) {
+        ctx.save();
+        ctx.strokeStyle = item.color;
+        ctx.globalAlpha = 0.45;
+        ctx.lineWidth = 0.8;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath();
+        ctx.moveTo(x, item.labelY);
+        ctx.lineTo(padL + plotW * (item.side === "left" ? 0.42 : 0.58), item.lineY);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      const tw = ctx.measureText(item.text).width;
+      const pad = 4;
+      const boxX = item.side === "right" ? x - tw - pad * 2 : x;
+      ctx.fillStyle = "rgba(11, 21, 32, 0.88)";
+      ctx.fillRect(boxX, item.labelY - 7, tw + pad * 2, 14);
       ctx.fillStyle = item.color;
-      ctx.textAlign = item.side === "right" ? "right" : "left";
+      ctx.textAlign = align;
       ctx.textBaseline = "middle";
-      const x = item.side === "right" ? padL + plotW - 4 : padL + 4;
-      ctx.fillText(item.text, x, item.y);
+      ctx.fillText(item.text, x, item.labelY);
     });
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
@@ -367,18 +411,21 @@
         drawHLine(ctx, y, padL, padL + plotW, UP, [4, 3]);
       });
 
-      const supportLabels = (levels.supports || []).map((s, i) => ({
-        y: yScale(pMin, pMax, pricePanel.y, pricePanel.h, s),
-        text: `支撐${i + 1} ${fmt(s)}`,
-        color: DOWN,
-      }));
-      const resistanceLabels = (levels.resistances || []).map((r, i) => ({
-        y: yScale(pMin, pMax, pricePanel.y, pricePanel.h, r),
-        text: `壓力${i + 1} ${fmt(r)}`,
-        color: UP,
-      }));
-      drawLevelLabels(ctx, supportLabels, pricePanel, padL, plotW, "left");
-      drawLevelLabels(ctx, resistanceLabels, pricePanel, padL, plotW, "right");
+      const levelLabels = [
+        ...(levels.supports || []).map((s, i) => ({
+          lineY: yScale(pMin, pMax, pricePanel.y, pricePanel.h, s),
+          text: `支撐${i + 1} ${fmt(s)}`,
+          color: DOWN,
+          side: "left",
+        })),
+        ...(levels.resistances || []).map((r, i) => ({
+          lineY: yScale(pMin, pMax, pricePanel.y, pricePanel.h, r),
+          text: `壓力${i + 1} ${fmt(r)}`,
+          color: UP,
+          side: "right",
+        })),
+      ];
+      drawAllLevelLabels(ctx, levelLabels, pricePanel, padL, plotW);
 
       const volMax = Math.max(...bars.map((b) => b.volume || 0), 1);
       bars.forEach((b, i) => {
