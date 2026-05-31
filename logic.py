@@ -26,6 +26,7 @@ from industry import (
     resolve_company_names,
 )
 from news import merge_news, parse_finmind_news, parse_yfinance_news
+from security_type import security_type_label
 from valuation import assess_price_level
 
 SECTION_REQUIRES = {
@@ -147,9 +148,13 @@ class StockAnalyzer:
             stock_info = self._source.fetch_stock_info() or {}
             names = resolve_company_names(self.stock_code, stock_info, info)
             price_level = assess_price_level(pe, pb, raw_pe=raw_pe)
+            product_type = security_type_label(
+                self.stock_code, stock_info, names.get("公司名稱")
+            )
 
             metrics = {
                 **names,
+                "商品類型": product_type,
                 "目前股價": price,
                 "價位評估": price_level["價位評估"],
                 "價位說明": price_level["價位說明"],

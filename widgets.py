@@ -890,6 +890,7 @@ class AdviceTab:
         verdict = data.get("評等", "—")
         score = data.get("綜合得分", 0)
         suggestion = data.get("入手參考", "")
+        score_note = data.get("評分說明", "（基本面 + 技術面 + 籌碼面）")
         tone = data.get("tone", "neutral")
 
         self.company_label.config(text=display or "—")
@@ -924,7 +925,7 @@ class AdviceTab:
 
         self._set_card(
             f"入手參考：{verdict}",
-            f"綜合得分 {score}（基本面 + 技術面 + 籌碼面）",
+            f"綜合得分 {score}｜{score_note}",
             suggestion,
             tone,
         )

@@ -308,6 +308,7 @@ function renderAdvice(advice) {
   const verdictArrow = ADVICE_TONE_ARROW[tone] || "→";
   const totalScore = advice.綜合得分 ?? "—";
   const suggestion = advice.入手參考 || "";
+  const scoreNote = advice.評分說明 || "（基本面 + 技術面 + 籌碼面）";
   const dimRows = (advice.dimensions || []).map((d) => toRow(d));
   const detailRows = (advice.details || []).map((d) => toRow(d));
   const candleSignals = advice.關鍵K棒 || [];
@@ -375,7 +376,7 @@ function renderAdvice(advice) {
                 <span class="hero-score-label">綜合得分</span>
               </div>
             </div>
-            <p class="hero-score-note">（基本面 + 技術面 + 籌碼面）</p>
+            <p class="hero-score-note">${esc(scoreNote)}</p>
             <div class="dim-mini-row">${renderDimBars(advice.dimensions)}</div>
           </section>
         </div>

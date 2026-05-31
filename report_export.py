@@ -220,6 +220,7 @@ def _advice_block(advice: dict) -> list:
         [
             _para(f"入手參考：{advice.get('評等', '')}", "body"),
             _para(f"綜合得分 {advice.get('綜合得分', '')}", "body"),
+            _para(advice.get("評分說明", ""), "body"),
             _para(advice.get("入手參考", ""), "body"),
         ]
     )

@@ -16,6 +16,7 @@ MARKET_LABEL = {"twse": "上市", "tpex": "上櫃"}
 SOURCE_LABELS = {
     "info": "Yahoo 股價",
     "history": "Yahoo K線",
+    "finmind_price": "FinMind K線",
     "news": "Yahoo 新聞",
     "finmind_per": "FinMind 本益比",
     "finmind_industry": "FinMind 產業",
@@ -36,6 +37,33 @@ def empty_cache_value(key: str):
     if key == "history":
         return pd.DataFrame()
     return None
+
+
+def finmind_price_to_history(raw: list | None) -> pd.DataFrame:
+    """將 FinMind TaiwanStockPrice 轉成與 yfinance 相容的 OHLCV DataFrame"""
+    if not raw:
+        return pd.DataFrame()
+    df = pd.DataFrame(raw)
+    if df.empty or "date" not in df.columns:
+        return pd.DataFrame()
+
+    df["date"] = pd.to_datetime(df["date"])
+    df = df.sort_values("date").drop_duplicates("date", keep="last")
+    df = df.set_index("date")
+    rename = {
+        "open": "Open",
+        "max": "High",
+        "min": "Low",
+        "close": "Close",
+        "Trading_Volume": "Volume",
+    }
+    for src, dst in rename.items():
+        if src in df.columns:
+            df[dst] = pd.to_numeric(df[src], errors="coerce")
+    needed = ["Open", "High", "Low", "Close", "Volume"]
+    if not all(col in df.columns for col in needed):
+        return pd.DataFrame()
+    return df[needed].dropna(how="any")
 
 
 class StockDataSource:
@@ -161,6 +189,31 @@ class StockDataSource:
     def _fetch_yfinance_news(self):
         return call_with_retry(lambda: self.ticker.news or [])
 
+    def _fetch_finmind_history(self):
+        start = (datetime.now() - timedelta(days=400)).strftime("%Y-%m-%d")
+        raw = request_finmind(self.stock_code, "TaiwanStockPrice", {"start_date": start})
+        return finmind_price_to_history(raw)
+
+    def _ensure_history_from_finmind(self) -> pd.DataFrame:
+        """Yahoo K 線為空時，改抓 FinMind 日線（ETF 等較常需要）"""
+        if self._cache.get("_finmind_history_tried"):
+            history = self._cache.get("history")
+            return history if isinstance(history, pd.DataFrame) else pd.DataFrame()
+
+        self._cache["_finmind_history_tried"] = True
+        try:
+            fm_df = self._fetch_finmind_history()
+            if not fm_df.empty:
+                self._cache["history"] = fm_df
+                self._errors.pop("history", None)
+                return fm_df
+        except Exception as exc:
+            if "history" not in self._errors:
+                self._errors["history"] = str(exc)
+            self._errors["finmind_price"] = str(exc)
+        history = self._cache.get("history")
+        return history if isinstance(history, pd.DataFrame) else pd.DataFrame()
+
     def _run_preload(self, on_ready=None):
         self._preload_in_progress = True
         self._errors.clear()
@@ -220,6 +273,20 @@ class StockDataSource:
                     _store(key, future.result())
                 except Exception as exc:
                     _store(key, None, exc)
+
+        history = self._cache.get("history")
+        if not isinstance(history, pd.DataFrame) or history.empty:
+            if not finmind_quota_exhausted():
+                try:
+                    fm_df = self._fetch_finmind_history()
+                    if not fm_df.empty:
+                        self._cache["history"] = fm_df
+                        self._errors.pop("history", None)
+                except Exception as exc:
+                    self._errors["finmind_price"] = str(exc)
+                    if "history" not in self._errors:
+                        self._errors["history"] = str(exc)
+            self._cache["_finmind_history_tried"] = True
 
         for key, task in finmind_tasks.items():
             if finmind_quota_exhausted():
@@ -304,7 +371,9 @@ class StockDataSource:
     def get_history(self) -> pd.DataFrame:
         self._ensure_preloaded()
         history = self._cache.get("history")
-        return history if isinstance(history, pd.DataFrame) else pd.DataFrame()
+        if isinstance(history, pd.DataFrame) and not history.empty:
+            return history
+        return self._ensure_history_from_finmind()
 
     def get_news_raw(self) -> list:
         self._ensure_preloaded()

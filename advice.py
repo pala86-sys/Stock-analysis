@@ -3,6 +3,7 @@
 import pandas as pd
 
 from indicators import detect_key_candle_signals
+from security_type import security_type_label
 from valuation import pb_detail_note, pe_detail_note, pe_invalid_reason, valid_ratio
 
 
@@ -447,8 +448,43 @@ def _estimate_entry_probability(total: int, tech_score: int, technical: dict) ->
     }
 
 
-def _verdict(total: int) -> tuple[str, str, str]:
+def _is_etf(fundamental: dict) -> bool:
+    metrics = fundamental.get("metrics") or {}
+    if metrics.get("商品類型") == "ETF":
+        return True
+    code = metrics.get("公司代號", "")
+    return security_type_label(code) == "ETF" if code else False
+
+
+def _weighted_scores(
+    fund_score: int, tech_score: int, chip_score: int, is_etf: bool
+) -> tuple[int, int, int, int]:
+    """ETF 不計基本面，技術 / 籌碼權重提高"""
+    if not is_etf:
+        return fund_score, tech_score, chip_score, fund_score + tech_score + chip_score
+
+    tech_weighted = round(tech_score * 1.5)
+    chip_weighted = round(chip_score * 1.5)
+    return 0, tech_weighted, chip_weighted, tech_weighted + chip_weighted
+
+
+def _verdict(total: int, *, is_etf: bool = False) -> tuple[str, str, str]:
     """回傳 (結論, 建議, 燈號顏色 key)"""
+    if is_etf:
+        if total >= 12:
+            return (
+                "偏多",
+                "ETF 技術與籌碼偏多，可列入觀察，但仍需留意大盤與追蹤誤差。",
+                "bull",
+            )
+        if total >= 6:
+            return "中性偏多", "整體不差，可小量布局或等待拉回。", "mild_bull"
+        if total >= 0:
+            return "中性", "多空因素交雜，建議觀望。", "neutral"
+        if total >= -6:
+            return "中性偏空", "短中期偏弱，不建議積極追高。", "mild_bear"
+        return "偏空", "技術與籌碼偏空，暫不建議積極入手。", "bear"
+
     if total >= 8:
         return "偏多", "多項指標同步偏多，可列入入手觀察，但仍需留意個股風險與大盤。", "bull"
     if total >= 4:
@@ -466,6 +502,7 @@ def build_investment_advice(
     chips: dict,
 ) -> dict:
     """綜合基本面、技術面、籌碼面產生入手參考評估"""
+    is_etf = _is_etf(fundamental)
     fund_score, fund_notes = _score_fundamental(fundamental)
     tech_score, tech_notes = _score_technical(technical)
     candle_score, candle_notes, candle_signals = _score_candle_signals(technical)
@@ -476,8 +513,10 @@ def build_investment_advice(
     tech_notes.extend(sr_notes)
     chip_score, chip_notes = _score_chips(chips)
 
-    total = fund_score + tech_score + chip_score
-    verdict, suggestion, tone = _verdict(total)
+    fund_display, tech_display, chip_display, total = _weighted_scores(
+        fund_score, tech_score, chip_score, is_etf
+    )
+    verdict, suggestion, tone = _verdict(total, is_etf=is_etf)
 
     metrics = fundamental.get("metrics") or {}
     company = metrics.get("公司名稱", "")
@@ -488,13 +527,26 @@ def build_investment_advice(
     if not subline and english and english != company:
         subline = english
 
-    dimension_rows = [
-        ("基本面", fund_score, "獲利與估值"),
-        ("技術面", tech_score, "均線 / KD / MACD / 關鍵K棒 / 支撐壓力"),
-        ("籌碼面", chip_score, "三大法人動向"),
-    ]
-
-    detail_rows = fund_notes + tech_notes + chip_notes
+    if is_etf:
+        dimension_rows = [
+            ("基本面", "—", "ETF 為多檔持股集合，不納入評分"),
+            ("技術面", tech_display, "均線 / KD / MACD / 關鍵K棒 / 支撐壓力（權重 ×1.5）"),
+            ("籌碼面", chip_display, "三大法人動向（權重 ×1.5）"),
+        ]
+        score_note = "ETF 評分：技術面 + 籌碼面（不含基本面，權重 ×1.5）"
+        detail_rows = [
+            ("評分方式", score_note, "—"),
+            *tech_notes,
+            *chip_notes,
+        ]
+    else:
+        dimension_rows = [
+            ("基本面", fund_display, "獲利與估值"),
+            ("技術面", tech_display, "均線 / KD / MACD / 關鍵K棒 / 支撐壓力"),
+            ("籌碼面", chip_display, "三大法人動向"),
+        ]
+        score_note = "綜合得分 = 基本面 + 技術面 + 籌碼面"
+        detail_rows = fund_notes + tech_notes + chip_notes
 
     price_raw = metrics.get("目前股價")
     price_text = _format_stock_price(price_raw)
@@ -507,6 +559,7 @@ def build_investment_advice(
         "公司代號": code,
         "顯示名稱": display,
         "副標名稱": subline,
+        "商品類型": metrics.get("商品類型", "股票"),
         "目前股價": price_raw if price_raw not in (None, "") else "",
         "目前股價顯示": f"{price_text} 元" if price_text else "",
         "價位評估": metrics.get("價位評估", ""),
@@ -518,6 +571,7 @@ def build_investment_advice(
         "評等": verdict,
         "入手參考": suggestion,
         "tone": tone,
+        "評分說明": score_note,
         "dimensions": dimension_rows,
         "details": detail_rows,
         "關鍵K棒": candle_signals,
