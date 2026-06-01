@@ -3,6 +3,7 @@
 import tkinter as tk
 from tkinter import ttk
 
+from advice import score_verdict_legend_for
 from indicators import (
     eps_filter_label,
     eps_filter_options,
@@ -914,6 +915,30 @@ class AdviceTab:
             self.dim_tree.column(col, width=w, anchor="center" if col == "score" else "w")
         self.dim_tree.pack(fill="x")
 
+        legend_wrap = tk.Frame(self.frame, bg="white")
+        legend_wrap.pack(fill="x", padx=16, pady=(0, 10))
+        tk.Label(
+            legend_wrap,
+            text="綜合得分區間說明",
+            font=("Microsoft JhengHei", 10, "bold"),
+            bg="white",
+            fg="#444444",
+            anchor="w",
+        ).pack(fill="x", pady=(0, 4))
+        self.score_legend_text = tk.Label(
+            legend_wrap,
+            text="",
+            font=("Microsoft JhengHei", 9),
+            bg="#F5F5F7",
+            fg="#333333",
+            anchor="w",
+            justify="left",
+            wraplength=820,
+            padx=12,
+            pady=10,
+        )
+        self.score_legend_text.pack(fill="x")
+
         tk.Label(
             self.frame, text="評估細項",
             font=("Microsoft JhengHei", 10, "bold"), bg="white", fg="#444444", anchor="w",
@@ -965,6 +990,18 @@ class AdviceTab:
         )
         self.export_btn.pack(side="right")
         self._export_callback = None
+
+    @staticmethod
+    def _format_score_legend_text(product_type: str = "股票") -> str:
+        legend = score_verdict_legend_for(product_type)
+        title = legend.get("類型", product_type)
+        lines = [f"【{title}】"]
+        for row in legend.get("項目", []):
+            lines.append(f"  {row['區間']}：{row['評等']}")
+        note = legend.get("備註")
+        if note:
+            lines.extend(["", note])
+        return "\n".join(lines)
 
     def set_export_callback(self, callback):
         self._export_callback = callback
@@ -1042,6 +1079,10 @@ class AdviceTab:
             f"綜合得分 {score}｜{score_note}",
             suggestion,
             tone,
+        )
+
+        self.score_legend_text.config(
+            text=self._format_score_legend_text(data.get("商品類型", "股票"))
         )
 
         prob = data.get("入手機率") or {}

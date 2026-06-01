@@ -468,6 +468,43 @@ def _weighted_scores(
     return 0, tech_weighted, chip_weighted, tech_weighted + chip_weighted
 
 
+def score_verdict_legend() -> dict:
+    """綜合得分區間說明（與 _verdict 門檻一致，供 UI 顯示）"""
+    return {
+        "股票": [
+            {"區間": "≥ 8", "評等": "偏多（看多）", "tone": "bull"},
+            {"區間": "4～7", "評等": "中性偏多", "tone": "mild_bull"},
+            {"區間": "0～3", "評等": "中性（觀望）", "tone": "neutral"},
+            {"區間": "-4～-1", "評等": "中性偏空", "tone": "mild_bear"},
+            {"區間": "≤ -5", "評等": "偏空（看空）", "tone": "bear"},
+        ],
+        "ETF": [
+            {"區間": "≥ 12", "評等": "偏多（看多）", "tone": "bull"},
+            {"區間": "6～11", "評等": "中性偏多", "tone": "mild_bull"},
+            {"區間": "0～5", "評等": "中性（觀望）", "tone": "neutral"},
+            {"區間": "-6～-1", "評等": "中性偏空", "tone": "mild_bear"},
+            {"區間": "≤ -7", "評等": "偏空（看空）", "tone": "bear"},
+        ],
+        "備註": "ETF 不計基本面；技術面與籌碼面權重 ×1.5。",
+    }
+
+
+def score_verdict_legend_for(product_type: str = "股票") -> dict:
+    """依商品類型回傳對應的得分區間說明（供 UI 只顯示一種）"""
+    full = score_verdict_legend()
+    if product_type == "ETF":
+        return {
+            "類型": "ETF",
+            "項目": full["ETF"],
+            "備註": full["備註"],
+        }
+    return {
+        "類型": "股票",
+        "項目": full["股票"],
+        "備註": "綜合得分 = 基本面 + 技術面 + 籌碼面。",
+    }
+
+
 def _verdict(total: int, *, is_etf: bool = False) -> tuple[str, str, str]:
     """回傳 (結論, 建議, 燈號顏色 key)"""
     if is_etf:
@@ -620,6 +657,7 @@ def build_investment_advice(
         "details": detail_rows,
         "關鍵K棒": candle_signals,
         "入手機率": entry_probability,
+        "得分區間說明": score_verdict_legend_for(metrics.get("商品類型", "股票")),
         "免責聲明": (
             "以上數值依公開資料參考而來，不構成投資建議，請自行判斷並自負盈虧。"
             "賺賠機率為統計推估，並非對個別交易結果之保證或預測。"
