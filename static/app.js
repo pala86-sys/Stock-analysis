@@ -450,7 +450,7 @@ function renderAdvice(advice) {
     candleSignals.length > 0
       ? `
     <section class="panel-glass advice-candles">
-      <h3 class="panel-section-title">關鍵 K 棒訊號</h3>
+      <h3 class="panel-section-title">關鍵 K 棒訊號（最新交易日）</h3>
       <div class="candle-signals">
         ${candleSignals
           .map(

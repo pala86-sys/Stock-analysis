@@ -1071,7 +1071,7 @@ class AdviceTab:
             lines = [f"• {c.get('名稱', '')}（{c.get('日期', '')}）— {c.get('說明', '')}" for c in candles]
             self.candle_text.config(text="\n".join(lines))
         else:
-            self.candle_text.config(text="近 5 日未偵測到典型 K 棒型態")
+            self.candle_text.config(text="最新交易日未出現典型 K 棒型態")
 
         self._clear(self.dim_tree)
         for i, (name, dim_score, desc) in enumerate(data.get("dimensions", [])):

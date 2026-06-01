@@ -211,9 +211,9 @@ def _score_candle_signals(technical: dict) -> tuple[int, list[tuple[str, str, st
     if "error" in technical:
         return 0, [], []
 
-    signals = detect_key_candle_signals(full_data, lookback=5)
+    signals = detect_key_candle_signals(full_data, latest_only=True)
     if not signals:
-        return 0, [("關鍵K棒", "近 5 日未偵測到典型型態", "0")], []
+        return 0, [("關鍵K棒", "最新交易日未出現典型 K 棒型態", "0")], []
 
     score = 0
     notes: list[tuple[str, str, str]] = []

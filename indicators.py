@@ -235,10 +235,20 @@ def _detect_single_candle_patterns(
     return out
 
 
-def detect_key_candle_signals(df: pd.DataFrame, lookback: int = 5) -> list[dict]:
+def detect_key_candle_signals(
+    df: pd.DataFrame,
+    *,
+    latest_only: bool = True,
+    lookback: int = 5,
+) -> list[dict]:
     """
-    偵測近期關鍵 K 棒與均線交叉（台股：紅漲綠跌）。
-    回傳 [{名稱, 日期, 說明, tone, 分數}, ...]，由近到遠、同類型只保留最近一筆。
+    偵測關鍵 K 棒與均線交叉（台股：紅漲綠跌）。
+
+    預設僅評估「最新一個交易日」：畫面與技術面加減分只反映當下查詢日，
+    避免近幾日歷史型態加總後把今日利多訊號抵消。
+
+    型態條件為常見技術分析規則（吞噬、放量、錘子/射擊之星/十字、均線交叉等），
+    並搭配近幾日趨勢判斷錘子/吊人等多空意義。
     """
     if df is None or len(df) < 3:
         return []
@@ -258,7 +268,10 @@ def detect_key_candle_signals(df: pd.DataFrame, lookback: int = 5) -> list[dict]
     avg_vol = volumes.rolling(20, min_periods=5).mean().shift(1)
 
     signals: list[dict] = []
-    start = max(1, len(work) - lookback)
+    if latest_only:
+        start = len(work) - 1
+    else:
+        start = max(1, len(work) - lookback)
 
     def _append(name: str, date: str, desc: str, tone: str, score: int):
         signals.append({"名稱": name, "日期": date, "說明": desc, "tone": tone, "分數": score})
@@ -316,7 +329,10 @@ def detect_key_candle_signals(df: pd.DataFrame, lookback: int = 5) -> list[dict]
             elif f_prev >= s_prev and f_now < s_now:
                 _append(death_name, date, f"{date} {death_name}，均線偏空", "bear", -1)
 
-    # 同類型只保留最近一筆
+    if latest_only:
+        return signals
+
+    # 歷史掃描模式：同類型只保留最近一筆
     seen: set[str] = set()
     unique: list[dict] = []
     for sig in reversed(signals):
