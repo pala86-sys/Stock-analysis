@@ -1029,17 +1029,13 @@ class AdviceTab:
             self.price_level_label.config(text="")
             self.price_level_label.pack_forget()
 
-        buy_range = data.get("建議買入區間", "")
+        buy_range = data.get("建議買入區間", "—") or "—"
         buy_note = data.get("買入區間說明", "")
-        if buy_range and buy_range != "—":
-            line = f"建議買入區間：{buy_range}"
-            if buy_note:
-                line += f"（{buy_note}）"
-            self.buy_range_label.config(text=line)
-            self.buy_range_label.pack(fill="x", padx=14, pady=(6, 0))
-        else:
-            self.buy_range_label.config(text="")
-            self.buy_range_label.pack_forget()
+        line = f"建議買入區間：{buy_range}"
+        if buy_note:
+            line += f"（{buy_note}）"
+        self.buy_range_label.config(text=line)
+        self.buy_range_label.pack(fill="x", padx=14, pady=(6, 0))
 
         self._set_card(
             f"入手參考：{verdict}",

@@ -439,7 +439,7 @@ function renderAdvice(advice) {
   const verdictArrow = ADVICE_TONE_ARROW[tone] || "→";
   const totalScore = advice.綜合得分 ?? "—";
   const suggestion = advice.入手參考 || "";
-  const buyRange = advice.建議買入區間 || "";
+  const buyRange = advice.建議買入區間 || "—";
   const buyRangeNote = advice.買入區間說明 || "";
   const scoreNote = advice.評分說明 || "（基本面 + 技術面 + 籌碼面）";
   const dimRows = (advice.dimensions || []).map((d) => toRow(d));
@@ -491,11 +491,7 @@ function renderAdvice(advice) {
           <section class="panel-glass advice-entry">
             <h3 class="panel-section-title">入手參考</h3>
             <span class="verdict-badge ${tone}">${esc(verdict)} ${verdictArrow}</span>
-            ${
-              buyRange
-                ? `<p class="advice-buy-range">建議買入區間：<strong>${esc(buyRange)}</strong>${buyRangeNote ? `<span class="advice-buy-note">（${esc(buyRangeNote)}）</span>` : ""}</p>`
-                : ""
-            }
+            <p class="advice-buy-range">建議買入區間：<strong>${esc(buyRange)}</strong>${buyRangeNote ? `<span class="advice-buy-note">（${esc(buyRangeNote)}）</span>` : ""}</p>
           </section>
           <section class="panel-glass advice-strategy">
             <h3 class="panel-section-title">操作策略</h3>

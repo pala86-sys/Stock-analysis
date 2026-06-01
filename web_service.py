@@ -6,7 +6,6 @@ from typing import Any
 import pandas as pd
 
 from advice import build_investment_advice
-from chart_render import render_chart_png, serialize_chart_bars
 from logic import StockAnalyzer
 from report_export import build_pdf_report
 from stock_search import format_stock_option, load_bundled_stock_list, resolve_stock_input, search_stocks
@@ -31,6 +30,8 @@ def _prepare_technical(technical: dict, display_days: int = 90) -> dict:
     full_data = technical.get("full_data")
     bars: list[dict] = []
     if full_data is not None and not getattr(full_data, "empty", True):
+        from chart_render import serialize_chart_bars
+
         bars = serialize_chart_bars(full_data, max_days=180)
 
     return {
@@ -81,6 +82,8 @@ def run_analysis(stock_id: str, display_days: int = 90) -> dict:
 
     chart_b64 = None
     if "error" not in technical_raw and technical_raw.get("full_data") is not None:
+        from chart_render import render_chart_png
+
         png = render_chart_png(
             technical_raw["full_data"],
             technical_raw.get("summary", {}),
