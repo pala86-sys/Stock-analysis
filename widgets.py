@@ -840,6 +840,16 @@ class AdviceTab:
         )
         self.price_level_label.pack(fill="x", padx=14, pady=(6, 0))
 
+        self.buy_range_label = tk.Label(
+            self.card,
+            text="",
+            font=("Microsoft JhengHei", 11),
+            bg="#F5F5F7",
+            fg="#333333",
+            anchor="w",
+        )
+        self.buy_range_label.pack(fill="x", padx=14, pady=(6, 0))
+
         self.verdict_label = tk.Label(
             self.card, text="", font=("Microsoft JhengHei", 20, "bold"),
             bg="#F5F5F7", fg="#222222", anchor="w",
@@ -972,6 +982,7 @@ class AdviceTab:
         self.company_sub_label.config(text="")
         self.stock_price_label.config(text="")
         self.price_level_label.config(text="")
+        self.buy_range_label.config(text="")
         self._clear(self.dim_tree)
         self._clear(self.detail_tree)
         self.disclaimer_label.config(text="")
@@ -1017,6 +1028,18 @@ class AdviceTab:
         else:
             self.price_level_label.config(text="")
             self.price_level_label.pack_forget()
+
+        buy_range = data.get("建議買入區間", "")
+        buy_note = data.get("買入區間說明", "")
+        if buy_range and buy_range != "—":
+            line = f"建議買入區間：{buy_range}"
+            if buy_note:
+                line += f"（{buy_note}）"
+            self.buy_range_label.config(text=line)
+            self.buy_range_label.pack(fill="x", padx=14, pady=(6, 0))
+        else:
+            self.buy_range_label.config(text="")
+            self.buy_range_label.pack_forget()
 
         self._set_card(
             f"入手參考：{verdict}",
@@ -1076,6 +1099,7 @@ class AdviceTab:
         self.company_label.config(bg=bg)
         self.company_sub_label.config(bg=bg)
         self.price_level_label.config(bg=bg)
+        self.buy_range_label.config(bg=bg)
         self.verdict_label.config(text=verdict, fg=fg, bg=bg)
         self.score_label.config(text=score_text, bg=bg)
         self.suggestion_label.config(text=suggestion, bg=bg)

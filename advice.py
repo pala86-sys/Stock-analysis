@@ -496,6 +496,47 @@ def _verdict(total: int, *, is_etf: bool = False) -> tuple[str, str, str]:
     return "偏空", "多項指標偏空，暫不建議入手，若持有宜控管風險。", "bear"
 
 
+def _fmt_range(low: float, high: float) -> str:
+    low = round(float(low), 2)
+    high = round(float(high), 2)
+    if abs(low - high) < 1e-9:
+        return f"{low:.2f}"
+    return f"{low:.2f}～{high:.2f}"
+
+
+def _suggest_buy_range(fundamental: dict, technical: dict) -> tuple[str, str]:
+    """
+    回傳 (買入區間文字, 說明)
+    規則：以「第一支撐」附近作為偏保守的分批布局區間；若缺資料則回傳 "—"。
+    """
+    metrics = fundamental.get("metrics") or {}
+    price = _numeric(metrics.get("目前股價"))
+    if price is None:
+        full = technical.get("full_data")
+        if isinstance(full, pd.DataFrame) and not full.empty and "Close" in full.columns:
+            try:
+                price = float(full["Close"].iloc[-1])
+            except Exception:
+                price = None
+    if price is None or price <= 0:
+        return "—", "查無現價，無法估算買入區間"
+
+    levels = technical.get("levels") or {}
+    supports = levels.get("supports") or []
+    support1 = supports[0] if supports else None
+    if isinstance(support1, (int, float)) and support1 > 0:
+        low = float(support1)
+        high = min(price, low * 1.02)
+        if high < low:
+            high = low
+        return _fmt_range(low, high), "以第一支撐附近分批布局（約 0%～+2%）"
+
+    # 沒有支撐價時，以現價下方保守區間呈現（避免鼓勵追價）
+    low = price * 0.97
+    high = price * 0.99
+    return _fmt_range(low, high), "支撐價不足，改以現價下方 1%～3% 作為保守參考區間"
+
+
 def build_investment_advice(
     fundamental: dict,
     technical: dict,
@@ -552,6 +593,7 @@ def build_investment_advice(
     price_text = _format_stock_price(price_raw)
     val_summary, val_indicators = _build_valuation_display(metrics)
     entry_probability = _estimate_entry_probability(total, tech_score, technical)
+    buy_range, buy_range_note = _suggest_buy_range(fundamental, technical)
 
     return {
         "公司名稱": company,
@@ -570,6 +612,8 @@ def build_investment_advice(
         "綜合得分": total,
         "評等": verdict,
         "入手參考": suggestion,
+        "建議買入區間": buy_range,
+        "買入區間說明": buy_range_note,
         "tone": tone,
         "評分說明": score_note,
         "dimensions": dimension_rows,
@@ -577,7 +621,7 @@ def build_investment_advice(
         "關鍵K棒": candle_signals,
         "入手機率": entry_probability,
         "免責聲明": (
-            "以上為程式依公開資料自動產生之規則式參考，不構成投資建議，請自行判斷並自負盈虧。"
+            "以上數值依公開資料參考而來，不構成投資建議，請自行判斷並自負盈虧。"
             "賺賠機率為統計推估，並非對個別交易結果之保證或預測。"
         ),
     }

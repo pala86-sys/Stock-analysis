@@ -531,6 +531,24 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   border-color: rgba(148, 163, 184, 0.35);
 }
 
+.advice-buy-range {
+  margin: 12px 0 0;
+  color: rgba(232, 244, 255, 0.92);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.advice-buy-range strong {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.advice-buy-note {
+  margin-left: 6px;
+  color: rgba(232, 244, 255, 0.7);
+  font-size: 0.88rem;
+}
+
 .advice-strategy-text {
   margin: 0;
   line-height: 1.75;
