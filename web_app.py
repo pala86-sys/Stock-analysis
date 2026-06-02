@@ -43,7 +43,7 @@ class AnalyzeRequest(BaseModel):
 
 
 class CompareRequest(BaseModel):
-    stock_ids: list[str] = Field(..., min_length=2, max_length=8, description="要比較的股票代號")
+    stock_ids: list[str] = Field(..., min_length=2, max_length=4, description="要比較的股票代號")
     display_days: int = Field(default=90, ge=30, le=180)
 
 

@@ -306,8 +306,8 @@ function addToCompare(stockId, label = "") {
     setCompareStatus("此股票已在比較清單中", true);
     return false;
   }
-  if (compareList.length >= 8) {
-    setCompareStatus("最多只能比較 8 檔股票", true);
+  if (compareList.length >= 4) {
+    setCompareStatus("最多只能比較 4 檔股票", true);
     return false;
   }
   compareList.push({ stock_id: sid, label: label || sid });

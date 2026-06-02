@@ -113,7 +113,7 @@ def run_analysis(stock_id: str, display_days: int = 90, *, include_chart: bool =
     }
 
 
-COMPARE_MAX_STOCKS = 8
+COMPARE_MAX_STOCKS = 4
 COMPARE_MAX_WORKERS = max(1, min(2, int(os.environ.get("COMPARE_MAX_WORKERS", "1"))))
 
 

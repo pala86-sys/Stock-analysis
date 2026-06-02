@@ -1116,7 +1116,7 @@ class AdviceTab:
 class CompareTab:
     """股票比較分頁：多檔精簡評估並可跳轉詳細分析"""
 
-    MAX_STOCKS = 8
+    MAX_STOCKS = 4
 
     TONE_COLORS = {
         "bull": "#D32F2F",
@@ -1136,7 +1136,7 @@ class CompareTab:
 
         tk.Label(
             self.frame,
-            text="請在上方搜尋列選好股票後，按「加入比較」。至少 2 檔，最多 8 檔。",
+            text="請在上方搜尋列選好股票後，按「加入比較」。至少 2 檔，最多 4 檔。",
             font=("Microsoft JhengHei", 10),
             bg="white",
             fg="#666666",
