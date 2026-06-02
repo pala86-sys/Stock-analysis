@@ -667,27 +667,6 @@ function renderDimBars(dimensions) {
     .join("");
 }
 
-function renderScoreLegend(legend) {
-  if (!legend) return "";
-  const title = legend.類型 || "股票";
-  const rows = legend.項目 || [];
-  const items = rows
-    .map(
-      (row) =>
-        `<li class="score-legend-item"><span class="score-legend-range ${esc(row.tone || "neutral")}">${esc(row.區間 || "")}</span><span class="score-legend-label">${esc(row.評等 || "")}</span></li>`
-    )
-    .join("");
-  const note = legend.備註
-    ? `<p class="score-legend-note">${esc(legend.備註)}</p>`
-    : "";
-  return `
-    <div class="score-legend">
-      <p class="score-legend-title">綜合得分區間說明（${esc(title)}）</p>
-      <ul class="score-legend-list score-legend-list--single">${items}</ul>
-      ${note}
-    </div>`;
-}
-
 function renderScoreRing(score) {
   const offset = scoreArcOffset(score);
   const circumference = 2 * Math.PI * 52;
@@ -947,7 +926,6 @@ function renderAdvice(advice) {
             </div>
             <p class="hero-score-note">${esc(scoreNote)}</p>
             <div class="dim-mini-row">${renderDimBars(advice.dimensions)}</div>
-            ${renderScoreLegend(advice.得分區間說明)}
           </section>
         </div>
       </div>
