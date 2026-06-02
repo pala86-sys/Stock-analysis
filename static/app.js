@@ -26,7 +26,7 @@ const compareResults = $("#compare-results");
 const btnAddCompare = $("#btn-add-compare");
 const btnRunCompare = $("#btn-run-compare");
 const cachedSingle = $("#cached-single");
-const btnShowCached = $("#btn-show-cached");
+const singlePicks = $("#single-picks");
 
 let selectedStockId = "";
 let lastPayload = null;
@@ -40,8 +40,8 @@ let compareSelectedId = "";
 let compareAnalysisCache = {};
 /** 最近一次比較 API 回應，切換分頁時還原表格 */
 let lastComparePayload = null;
-/** 從比較切回單檔的暫存分析，點按鈕才展開 */
-let pendingSingleData = null;
+/** 從比較切回單檔的預設焦點股票 */
+let pendingSingleId = "";
 let techChartInstance = null;
 let fundamentalCache = null;
 let revenueFilter = "24";
@@ -129,22 +129,43 @@ function setStatus(msg, isError = false) {
   statusEl.className = isError ? "status error" : "status";
 }
 
-function showCachedSingleButton(data) {
-  if (!cachedSingle || !btnShowCached) return;
-  pendingSingleData = data;
-  const advice = data?.advice || {};
-  const sid = String(data?.stock_id || advice.公司代號 || "").trim();
-  const name = String(advice.公司名稱 || advice.顯示名稱 || "").trim();
-  const label = [sid, name].filter(Boolean).join(" ").trim();
-  btnShowCached.textContent = label ? `${label}（點此顯示詳細資料）` : "點此顯示詳細資料";
+function showSinglePickBar(focusId = "") {
+  if (!cachedSingle || !singlePicks) return;
+  const items = compareList || [];
+  if (!items.length) {
+    cachedSingle.classList.add("hidden");
+    singlePicks.innerHTML = "";
+    return;
+  }
+  pendingSingleId = focusId || pendingSingleId || "";
+  singlePicks.innerHTML = items
+    .map((item) => {
+      const sid = String(item.stock_id || "").trim();
+      const label = String(item.label || sid).trim();
+      const active = pendingSingleId && sid === pendingSingleId ? "active" : "";
+      return `<button type="button" class="single-pick-btn ${active}" data-pick-id="${esc(sid)}">${esc(label)}</button>`;
+    })
+    .join("");
+  singlePicks.querySelectorAll("[data-pick-id]").forEach((btn) => {
+    btn.addEventListener("click", () => analyzeStock(btn.dataset.pickId));
+  });
   cachedSingle.classList.remove("hidden");
-  btnShowCached.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (pendingSingleId) {
+    const el = singlePicks.querySelector(`[data-pick-id="${CSS.escape(pendingSingleId)}"]`);
+    el?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+  }
 }
 
-function hideCachedSingleButton() {
-  pendingSingleData = null;
+function hideSinglePickBar() {
+  pendingSingleId = "";
   if (!cachedSingle) return;
   cachedSingle.classList.add("hidden");
+  if (singlePicks) singlePicks.innerHTML = "";
+}
+
+function updateReportButton() {
+  // 有選定 stock_id 才能匯出；是否重新請求由後端決定
+  btnReport.disabled = !lastPayload?.stock_id;
 }
 
 function showPanel(name) {
@@ -225,13 +246,15 @@ function setAppMode(mode) {
 
   if (mode === "compare") {
     results.classList.add("hidden");
-    hideCachedSingleButton();
+    hideSinglePickBar();
     renderCompareChips();
     if (lastComparePayload?.results?.length) {
       renderCompareResults(lastComparePayload);
       setCompareStatus("比較完成 — 可繼續加入股票或查看詳細資訊");
     }
-  } else if (mode === "single" && !results.classList.contains("hidden")) {
+  } else if (mode === "single") {
+    // 單檔模式時，若有已選股票，顯示快捷按鈕列（不論是否已展開詳細分析）
+    if (compareList?.length) showSinglePickBar(pendingSingleId);
     compareResults?.classList.add("hidden");
   }
 }
@@ -417,7 +440,8 @@ function renderCompareResults(payload) {
       const s = row.summary || {};
       const tone = s.tone || "neutral";
       const entryText = oneLine(s.入手參考 || "—", 48);
-      const buyText = String(s.建議買入區間 || "—") || "—";
+      const buyRange = String(s.建議買入區間 || "—") || "—";
+      const buyText = `建議買入區間：${buyRange}`;
       const extraNotes = [];
       if (s.買入區間說明) extraNotes.push(`買價：${s.買入區間說明}`);
       if (row.errors?.length) extraNotes.push(`部分資料未能載入：${row.errors.join("、")}`);
@@ -466,7 +490,7 @@ function renderCompareResults(payload) {
           <tbody>${body}</tbody>
         </table>
       </div>
-      <p class="score-legend-note" style="margin-top:12px">依綜合得分由高至低排序。點「詳細資訊」將使用比較時已載入的資料，不會重新請求 API。</p>
+      <p class="score-legend-note" style="margin-top:12px">依綜合得分由高至低排序。點「詳細資訊」可查閱各股/ETF完整資訊</p>
     </div>`;
   compareResults.classList.remove("hidden");
 
@@ -493,21 +517,24 @@ function applyAnalysisResult(data, { fromCompare = false } = {}) {
   selectedStockId = stockId;
 
   if (fromCompare) {
-    // 回到單檔時先顯示快捷按鈕，點擊才展開詳細資料
+    // 回到單檔時先顯示「已選股票」快捷按鈕列，點選才展開詳細資料
     results.classList.add("hidden");
     compareResults?.classList.add("hidden");
-    showCachedSingleButton(data);
+    pendingSingleId = stockId;
+    showSinglePickBar(stockId);
     setStatus("");
+    updateReportButton();
     return;
   } else {
-    hideCachedSingleButton();
+    if (compareList?.length) showSinglePickBar(stockId);
+    else hideSinglePickBar();
     renderAll(data);
   }
 
   let status = "分析完成";
   if (data.errors?.length) status += `（部分資料未能載入：${data.errors.join("、")}）`;
   setStatus(status);
-  btnReport.disabled = Boolean(lastAdvice);
+  updateReportButton();
 }
 
 async function runCompare() {
@@ -546,10 +573,14 @@ async function analyzeStock(stockId) {
   setAppMode("single");
   selectedStockId = sid;
   input.value = sid;
+  pendingSingleId = sid;
+  if (compareList?.length) showSinglePickBar(sid);
 
   const cached = compareAnalysisCache[sid];
   if (cached) {
-    applyAnalysisResult(cached, { fromCompare: true });
+    // 已點選要看詳細 → 直接展開
+    hideSinglePickBar();
+    applyAnalysisResult(cached, { fromCompare: false });
     return;
   }
 
@@ -1238,14 +1269,6 @@ async function downloadReport() {
 btnAnalyze.addEventListener("click", analyze);
 btnReport.addEventListener("click", downloadReport);
 btnRunCompare?.addEventListener("click", runCompare);
-btnShowCached?.addEventListener("click", () => {
-  if (!pendingSingleData) return;
-  const data = pendingSingleData;
-  hideCachedSingleButton();
-  renderAll(data);
-  results.classList.remove("hidden");
-  showPanel("advice");
-});
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") analyze();
 });

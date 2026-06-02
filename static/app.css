@@ -143,20 +143,34 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   background: rgba(8, 18, 32, 0.4);
 }
 
-.cached-single-btn {
-  width: 100%;
-  text-align: left;
-  padding: 12px 14px;
+.single-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.single-pick-btn {
+  min-height: auto;
+  padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid rgba(79, 209, 255, 0.35);
   background: rgba(255, 255, 255, 0.06);
   color: rgba(232, 244, 255, 0.92);
   font-weight: 700;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.cached-single-btn:hover,
-.cached-single-btn:active {
+.single-pick-btn:hover,
+.single-pick-btn:active {
   background: rgba(79, 209, 255, 0.12);
+}
+
+.single-pick-btn.active {
+  border-color: rgba(79, 209, 255, 0.65);
+  background: rgba(79, 209, 255, 0.14);
 }
 
 .mode-bar {
