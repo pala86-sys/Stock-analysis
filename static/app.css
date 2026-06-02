@@ -286,19 +286,14 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   min-width: 0;
 }
 
-.compare-code {
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-}
-
-.compare-target-name {
+.compare-target-label {
   display: inline-block;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: rgba(232, 244, 255, 0.9);
+  font-weight: 700;
 }
 
 .compare-metrics {

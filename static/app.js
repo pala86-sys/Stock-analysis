@@ -420,6 +420,20 @@ function renderCompareResults(payload) {
     return;
   }
 
+  const stripCodeFromName = (display, stockId) => {
+    const sid = String(stockId || "").trim();
+    let name = String(display || "").trim();
+    if (!sid || !name) return name || "—";
+    for (const token of [`（${sid}）`, `(${sid})`]) {
+      name = name.replaceAll(token, "");
+    }
+    // 常見格式："台玻 (1802)"、"群創（3481）"、"3481 群創"
+    name = name.replaceAll(sid, "");
+    name = name.replace(/\s+/g, " ").trim();
+    name = name.replace(/^[\s\-–—]+|[\s\-–—]+$/g, "").trim();
+    return name || String(display || "").trim() || "—";
+  };
+
   const oneLine = (text, max = 42) => {
     const s = String(text || "")
       .replace(/\s+/g, " ")
@@ -439,6 +453,9 @@ function renderCompareResults(payload) {
       }
       const s = row.summary || {};
       const tone = s.tone || "neutral";
+      const sid = String(s.公司代號 || row.stock_id || "").trim();
+      const nameOnly = stripCodeFromName(s.顯示名稱 || "—", sid);
+      const targetLabel = sid ? `${nameOnly}（${sid}）` : nameOnly;
       const entryText = oneLine(s.入手參考 || "—", 48);
       const buyRange = String(s.建議買入區間 || "—") || "—";
       const buyText = `建議買入區間：${buyRange}`;
@@ -449,8 +466,7 @@ function renderCompareResults(payload) {
       return `<tr>
         <td class="col-target" data-label="標的">
           <div class="compare-target">
-            <strong class="compare-code">${esc(s.公司代號 || row.stock_id || "—")}</strong>
-            <span class="compare-target-name" title="${esc(s.顯示名稱 || "—")}">${esc(s.顯示名稱 || "—")}</span>
+            <span class="compare-target-label" title="${esc(targetLabel)}">${esc(targetLabel)}</span>
           </div>
         </td>
         <td class="col-metrics" data-label="比較" title="${title}">
