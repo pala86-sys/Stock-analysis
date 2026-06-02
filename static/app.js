@@ -16,11 +16,24 @@ const results = $("#results");
 const btnAnalyze = $("#btn-analyze");
 const btnReport = $("#btn-report");
 const tabSelect = $("#tab-select");
+const searchSingle = $("#search-single");
+const searchCompare = $("#search-compare");
+const compareInput = $("#compare-input");
+const compareSuggestions = $("#compare-suggestions");
+const compareChips = $("#compare-chips");
+const compareStatus = $("#compare-status");
+const compareResults = $("#compare-results");
+const btnAddCompare = $("#btn-add-compare");
+const btnRunCompare = $("#btn-run-compare");
 
 let selectedStockId = "";
 let lastPayload = null;
 let lastAdvice = null;
 let debounceTimer = null;
+let compareDebounceTimer = null;
+let appMode = "single";
+let compareList = [];
+let compareSelectedId = "";
 let techChartInstance = null;
 let fundamentalCache = null;
 let revenueFilter = "24";
@@ -170,8 +183,284 @@ suggestions.addEventListener("click", (e) => {
 });
 
 document.addEventListener("click", (e) => {
-  if (!e.target.closest(".search-wrap")) suggestions.classList.add("hidden");
+  if (!e.target.closest(".search-wrap")) {
+    suggestions.classList.add("hidden");
+    if (compareSuggestions) compareSuggestions.classList.add("hidden");
+  }
 });
+
+function setAppMode(mode) {
+  appMode = mode;
+  document.querySelectorAll(".mode-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.mode === mode);
+  });
+  if (searchSingle) searchSingle.classList.toggle("hidden", mode !== "single");
+  if (searchCompare) searchCompare.classList.toggle("hidden", mode !== "compare");
+  if (mode === "compare") {
+    results.classList.add("hidden");
+  }
+}
+
+document.querySelectorAll(".mode-btn").forEach((btn) => {
+  btn.addEventListener("click", () => setAppMode(btn.dataset.mode || "single"));
+});
+
+function setCompareStatus(msg, isError = false) {
+  if (!compareStatus) return;
+  compareStatus.textContent = msg || "";
+  compareStatus.className = isError ? "status error" : "status";
+}
+
+function updateCompareControls() {
+  if (btnRunCompare) {
+    btnRunCompare.disabled = compareList.length < 2;
+    btnRunCompare.textContent =
+      compareList.length >= 2 ? `開始比較（${compareList.length} 檔）` : "開始比較";
+  }
+}
+
+function renderCompareChips() {
+  if (!compareChips) return;
+  if (!compareList.length) {
+    compareChips.innerHTML = '<li class="compare-chip compare-chip-empty">尚未加入股票</li>';
+    updateCompareControls();
+    return;
+  }
+  compareChips.innerHTML = compareList
+    .map(
+      (item) =>
+        `<li class="compare-chip"><span>${esc(item.label || item.stock_id)}</span><button type="button" data-remove-id="${esc(item.stock_id)}" aria-label="移除">×</button></li>`
+    )
+    .join("");
+  compareChips.querySelectorAll("[data-remove-id]").forEach((btn) => {
+    btn.addEventListener("click", () => removeFromCompare(btn.dataset.removeId));
+  });
+  updateCompareControls();
+}
+
+function addToCompare(stockId, label = "") {
+  const sid = String(stockId || "").trim();
+  if (!sid) {
+    setCompareStatus("請先選擇有效股票", true);
+    return false;
+  }
+  if (compareList.some((item) => item.stock_id === sid)) {
+    setCompareStatus("此股票已在比較清單中", true);
+    return false;
+  }
+  if (compareList.length >= 8) {
+    setCompareStatus("最多只能比較 8 檔股票", true);
+    return false;
+  }
+  compareList.push({ stock_id: sid, label: label || sid });
+  renderCompareChips();
+  setCompareStatus(`已加入 ${label || sid}`);
+  return true;
+}
+
+function removeFromCompare(stockId) {
+  compareList = compareList.filter((item) => item.stock_id !== stockId);
+  renderCompareChips();
+  setCompareStatus("");
+}
+
+function bindCompareSearch() {
+  if (!compareInput) return;
+
+  compareInput.addEventListener("input", () => {
+    compareSelectedId = "";
+    clearTimeout(compareDebounceTimer);
+    const q = compareInput.value.trim();
+    if (q.length < 1) {
+      compareSuggestions.classList.add("hidden");
+      return;
+    }
+    compareDebounceTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(apiUrl(`/api/stocks/search?q=${encodeURIComponent(q)}`));
+        const data = await res.json();
+        const items = data.results || [];
+        if (!items.length) {
+          compareSuggestions.classList.add("hidden");
+          return;
+        }
+        compareSuggestions.innerHTML = items
+          .map(
+            (s) =>
+              `<li data-id="${esc(s.stock_id)}" data-label="${esc(s.label)}">${esc(s.label)}</li>`
+          )
+          .join("");
+        compareSuggestions.classList.remove("hidden");
+      } catch {
+        compareSuggestions.classList.add("hidden");
+      }
+    }, 250);
+  });
+
+  compareSuggestions.addEventListener("click", (e) => {
+    const li = e.target.closest("li");
+    if (!li) return;
+    compareSelectedId = li.dataset.id;
+    compareInput.value = li.dataset.id;
+    compareSuggestions.classList.add("hidden");
+    addToCompare(compareSelectedId, li.dataset.label);
+    compareInput.value = "";
+    compareSelectedId = "";
+  });
+
+  compareInput.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (compareSelectedId) {
+      addToCompare(compareSelectedId, compareInput.value.trim());
+      compareInput.value = "";
+      compareSelectedId = "";
+      return;
+    }
+    const q = compareInput.value.trim();
+    if (!q) return;
+    fetch(apiUrl(`/api/stocks/search?q=${encodeURIComponent(q)}`))
+      .then((r) => r.json())
+      .then((data) => {
+        const first = (data.results || [])[0];
+        if (first) addToCompare(first.stock_id, first.label);
+        else setCompareStatus("找不到符合的股票", true);
+      })
+      .catch(() => setCompareStatus("搜尋失敗", true));
+  });
+
+  btnAddCompare?.addEventListener("click", () => {
+    const q = compareInput.value.trim();
+    if (compareSelectedId) {
+      addToCompare(compareSelectedId, q);
+      compareInput.value = "";
+      compareSelectedId = "";
+      return;
+    }
+    if (!q) {
+      setCompareStatus("請輸入股票代號或名稱", true);
+      return;
+    }
+    fetch(apiUrl(`/api/stocks/search?q=${encodeURIComponent(q)}`))
+      .then((r) => r.json())
+      .then((data) => {
+        const first = (data.results || [])[0];
+        if (first) {
+          addToCompare(first.stock_id, first.label);
+          compareInput.value = "";
+        } else setCompareStatus("找不到符合的股票", true);
+      })
+      .catch(() => setCompareStatus("搜尋失敗", true));
+  });
+}
+
+function renderCompareResults(payload) {
+  if (!compareResults) return;
+  const rows = payload?.results || [];
+  if (!rows.length) {
+    compareResults.classList.add("hidden");
+    return;
+  }
+
+  const body = rows
+    .map((row) => {
+      if (!row.ok) {
+        return `<tr class="compare-row-error">
+          <td data-label="代號">${esc(row.stock_id || "—")}</td>
+          <td data-label="名稱" colspan="5">${esc(row.error || "分析失敗")}</td>
+        </tr>`;
+      }
+      const s = row.summary || {};
+      const tone = s.tone || "neutral";
+      const buyNote = s.買入區間說明
+        ? `<span class="compare-buy-note">${esc(s.買入區間說明)}</span>`
+        : "";
+      const errNote =
+        row.errors?.length
+          ? `<span class="compare-buy-note">部分資料未能載入：${esc(row.errors.join("、"))}</span>`
+          : "";
+      return `<tr>
+        <td data-label="代號"><strong>${esc(s.公司代號 || row.stock_id || "—")}</strong></td>
+        <td data-label="名稱">${esc(s.顯示名稱 || "—")}</td>
+        <td data-label="綜合得分">
+          <div class="compare-score">${esc(String(s.綜合得分 ?? "—"))}</div>
+          <span class="compare-verdict ${esc(tone)}">${esc(s.評等 || "—")}</span>
+        </td>
+        <td data-label="入手參考"><div class="compare-entry">${esc(s.入手參考 || "—")}</div></td>
+        <td data-label="建議買價">
+          <span class="compare-buy">${esc(s.建議買入區間 || "—")}</span>
+          ${buyNote}${errNote}
+        </td>
+        <td data-label="操作">
+          <button type="button" class="compare-detail-btn" data-detail-id="${esc(row.stock_id || s.公司代號 || "")}">詳細資訊</button>
+        </td>
+      </tr>`;
+    })
+    .join("");
+
+  compareResults.innerHTML = `
+    <div class="compare-panel">
+      <h2 class="compare-panel-title">股票比較結果</h2>
+      <div class="compare-table-wrap">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>代號</th>
+              <th>名稱</th>
+              <th>綜合得分</th>
+              <th>入手參考</th>
+              <th>建議買價</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+      <p class="score-legend-note" style="margin-top:12px">依綜合得分由高至低排序。點「詳細資訊」可查看該檔完整分析。</p>
+    </div>`;
+  compareResults.classList.remove("hidden");
+
+  compareResults.querySelectorAll("[data-detail-id]").forEach((btn) => {
+    btn.addEventListener("click", () => analyzeStock(btn.dataset.detailId));
+  });
+  compareResults.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function runCompare() {
+  if (compareList.length < 2) {
+    setCompareStatus("請至少加入 2 檔股票", true);
+    return;
+  }
+  btnRunCompare.disabled = true;
+  btnAddCompare.disabled = true;
+  setCompareStatus(`正在分析 ${compareList.length} 檔股票…（每檔約 10～30 秒，請稍候）`);
+  compareResults?.classList.add("hidden");
+
+  try {
+    const res = await fetch(apiUrl("/api/compare"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stock_ids: compareList.map((item) => item.stock_id) }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "比較失敗");
+    renderCompareResults(data);
+    setCompareStatus("比較完成");
+  } catch (err) {
+    setCompareStatus(err.message || "比較失敗", true);
+  } finally {
+    btnAddCompare.disabled = false;
+    updateCompareControls();
+  }
+}
+
+async function analyzeStock(stockId) {
+  if (!stockId) return;
+  setAppMode("single");
+  selectedStockId = stockId;
+  input.value = stockId;
+  await runAnalysis(stockId, stockId);
+}
 
 function toRow(item) {
   if (Array.isArray(item)) return item;
@@ -747,27 +1036,23 @@ function renderAll(data) {
   showPanel("advice");
 }
 
-async function analyze() {
-  const query = input.value.trim();
-  if (!query) {
-    setStatus("請先輸入股票代號或名稱", true);
-    return;
-  }
+async function runAnalysis(stockId, query) {
   btnAnalyze.disabled = true;
   btnReport.disabled = true;
   setStatus("正在連線資料源，分析中…（約 10～30 秒）");
   results.classList.add("hidden");
+  compareResults?.classList.add("hidden");
 
   try {
     const res = await fetch(apiUrl("/api/analyze"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ stock_id: selectedStockId, query }),
+      body: JSON.stringify({ stock_id: stockId, query }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || "分析失敗");
 
-    lastPayload = { stock_id: selectedStockId, query: data.stock_id || query };
+    lastPayload = { stock_id: stockId, query: data.stock_id || query };
     lastAdvice = data.advice || null;
     renderAll(data);
     input.value = data.stock_id || query;
@@ -782,6 +1067,15 @@ async function analyze() {
   } finally {
     btnAnalyze.disabled = false;
   }
+}
+
+async function analyze() {
+  const query = input.value.trim();
+  if (!query) {
+    setStatus("請先輸入股票代號或名稱", true);
+    return;
+  }
+  await runAnalysis(selectedStockId, query);
 }
 
 function parseDownloadFilename(res, fallback) {
@@ -853,11 +1147,14 @@ async function downloadReport() {
 
 btnAnalyze.addEventListener("click", analyze);
 btnReport.addEventListener("click", downloadReport);
+btnRunCompare?.addEventListener("click", runCompare);
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") analyze();
 });
 
 (function initApp() {
+  renderCompareChips();
+  bindCompareSearch();
   const sub = $("#app-subtitle");
   if (sub && isNativeApp()) {
     sub.textContent = "Android 版 · 基本面 · 技術面 · 籌碼面 · 綜合評估";

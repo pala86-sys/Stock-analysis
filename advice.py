@@ -663,3 +663,19 @@ def build_investment_advice(
             "賺賠機率為統計推估，並非對個別交易結果之保證或預測。"
         ),
     }
+
+
+def advice_compare_summary(advice: dict) -> dict:
+    """股票比較用精簡欄位"""
+    return {
+        "公司代號": advice.get("公司代號", ""),
+        "顯示名稱": advice.get("顯示名稱") or advice.get("公司名稱", ""),
+        "商品類型": advice.get("商品類型", "股票"),
+        "綜合得分": advice.get("綜合得分", 0),
+        "評等": advice.get("評等", ""),
+        "tone": advice.get("tone", "neutral"),
+        "入手參考": advice.get("入手參考", ""),
+        "建議買入區間": advice.get("建議買入區間", "—") or "—",
+        "買入區間說明": advice.get("買入區間說明", ""),
+        "目前股價顯示": advice.get("目前股價顯示", ""),
+    }

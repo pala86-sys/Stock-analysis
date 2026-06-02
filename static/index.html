@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>台股多維度全方位觀測儀</title>
-  <link rel="stylesheet" href="app.css?v=20260603">
+  <link rel="stylesheet" href="app.css?v=20260604">
 </head>
 <body>
   <header class="topbar">
@@ -15,7 +15,12 @@
     <p class="subtitle" id="app-subtitle">基本面 · 技術面 · 籌碼面 · 綜合評估</p>
   </header>
 
-  <section class="search-bar">
+  <section class="mode-bar" aria-label="分析模式">
+    <button type="button" class="mode-btn active" data-mode="single">單檔分析</button>
+    <button type="button" class="mode-btn" data-mode="compare">股票比較</button>
+  </section>
+
+  <section class="search-bar" id="search-single">
     <label for="stock-input">請輸入股票名稱或代碼</label>
     <div class="search-row">
       <div class="search-wrap">
@@ -27,6 +32,22 @@
     </div>
     <p id="status" class="status"></p>
   </section>
+
+  <section class="search-bar compare-bar hidden" id="search-compare">
+    <label for="compare-input">加入要比較的股票（至少 2 檔，最多 8 檔）</label>
+    <div class="search-row">
+      <div class="search-wrap">
+        <input id="compare-input" type="text" placeholder="例如：2330 或 台積電" autocomplete="off">
+        <ul id="compare-suggestions" class="suggestions hidden"></ul>
+      </div>
+      <button id="btn-add-compare" type="button">加入</button>
+      <button id="btn-run-compare" type="button" disabled>開始比較</button>
+    </div>
+    <ul id="compare-chips" class="compare-chips" aria-label="已選股票"></ul>
+    <p id="compare-status" class="status"></p>
+  </section>
+
+  <section id="compare-results" class="compare-results hidden" aria-label="股票比較結果"></section>
 
   <main id="results" class="results hidden">
     <nav class="tab-nav" id="tab-nav" aria-label="分析面向">
@@ -63,8 +84,8 @@
     <p>資料來源：FinMind + Yahoo Finance，不構成投資建議</p>
   </footer>
 
-  <script src="config.js?v=20260603"></script>
-  <script src="chart.js?v=20260603"></script>
-  <script src="app.js?v=20260603"></script>
+  <script src="config.js?v=20260604"></script>
+  <script src="chart.js?v=20260604"></script>
+  <script src="app.js?v=20260604"></script>
 </body>
 </html>

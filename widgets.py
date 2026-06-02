@@ -1145,3 +1145,296 @@ class AdviceTab:
     def _clear(tree):
         for item in tree.get_children():
             tree.delete(item)
+
+
+class CompareTab:
+    """股票比較分頁：多檔精簡評估並可跳轉詳細分析"""
+
+    MAX_STOCKS = 8
+
+    TONE_COLORS = {
+        "bull": "#D32F2F",
+        "mild_bull": "#0071E3",
+        "neutral": "#666666",
+        "mild_bear": "#F57C00",
+        "bear": "#546E7A",
+    }
+
+    def __init__(self, parent_notebook: ttk.Notebook, on_detail=None):
+        self.frame = tk.Frame(parent_notebook, bg="white")
+        parent_notebook.add(self.frame, text="  股票比較  ")
+        self._on_detail = on_detail
+        self._on_compare = None
+        self._selected: list[dict] = []
+        self._result_stock_ids: dict[str, str] = {}
+
+        tk.Label(
+            self.frame,
+            text="請在上方搜尋列選好股票後，按「加入比較」。至少 2 檔，最多 8 檔。",
+            font=("Microsoft JhengHei", 10),
+            bg="white",
+            fg="#666666",
+            anchor="w",
+        ).pack(fill="x", padx=16, pady=(14, 8))
+
+        pick_wrap = tk.Frame(self.frame, bg="white")
+        pick_wrap.pack(fill="x", padx=16, pady=(0, 8))
+
+        tk.Label(
+            pick_wrap,
+            text="待比較清單",
+            font=("Microsoft JhengHei", 10, "bold"),
+            bg="white",
+            fg="#444444",
+        ).pack(side="left")
+
+        self.btn_remove = tk.Button(
+            pick_wrap,
+            text="移除選取",
+            command=self._remove_selected,
+            font=("Microsoft JhengHei", 9),
+            relief="flat",
+            bg="#E5E5EA",
+            padx=10,
+            cursor="hand2",
+        )
+        self.btn_remove.pack(side="right", padx=(6, 0))
+
+        self.btn_clear = tk.Button(
+            pick_wrap,
+            text="全部清除",
+            command=self.clear_selected,
+            font=("Microsoft JhengHei", 9),
+            relief="flat",
+            bg="#E5E5EA",
+            padx=10,
+            cursor="hand2",
+        )
+        self.btn_clear.pack(side="right")
+
+        list_wrap = tk.Frame(self.frame, bg="white")
+        list_wrap.pack(fill="x", padx=16, pady=(0, 8))
+        self.selected_listbox = tk.Listbox(
+            list_wrap,
+            height=5,
+            font=("Microsoft JhengHei", 10),
+            selectmode="browse",
+            activestyle="none",
+        )
+        self.selected_listbox.pack(fill="x")
+
+        action_wrap = tk.Frame(self.frame, bg="white")
+        action_wrap.pack(fill="x", padx=16, pady=(0, 12))
+        self.btn_compare = tk.Button(
+            action_wrap,
+            text="開始比較",
+            command=self._trigger_compare,
+            font=("Microsoft JhengHei", 10, "bold"),
+            bg="#0071E3",
+            fg="white",
+            relief="flat",
+            padx=16,
+            pady=6,
+            cursor="hand2",
+            state="disabled",
+        )
+        self.btn_compare.pack(side="left")
+
+        self.status_label = tk.Label(
+            action_wrap,
+            text="",
+            font=("Microsoft JhengHei", 9),
+            bg="white",
+            fg="#666666",
+        )
+        self.status_label.pack(side="left", padx=(12, 0))
+
+        tk.Label(
+            self.frame,
+            text="比較結果（依綜合得分排序）",
+            font=("Microsoft JhengHei", 10, "bold"),
+            bg="white",
+            fg="#444444",
+            anchor="w",
+        ).pack(fill="x", padx=16, pady=(0, 6))
+
+        tree_wrap = tk.Frame(self.frame, bg="white")
+        tree_wrap.pack(fill="both", expand=True, padx=16, pady=(0, 14))
+
+        columns = [
+            ("code", "代號", 70, "center"),
+            ("name", "名稱", 120, "w"),
+            ("score", "綜合得分", 70, "center"),
+            ("verdict", "評等", 80, "center"),
+            ("buy", "建議買價", 120, "center"),
+            ("entry", "入手參考", 320, "w"),
+            ("action", "操作", 70, "center"),
+        ]
+        col_ids = [c[0] for c in columns]
+        self.result_tree = ttk.Treeview(
+            tree_wrap,
+            columns=col_ids,
+            show="headings",
+            style="Data.Treeview",
+            selectmode="browse",
+        )
+        scrollbar = ttk.Scrollbar(tree_wrap, orient="vertical", command=self.result_tree.yview)
+        self.result_tree.configure(yscrollcommand=scrollbar.set)
+
+        for col_id, heading, width, anchor in columns:
+            self.result_tree.heading(col_id, text=heading, anchor="center")
+            stretch = col_id == "entry"
+            self.result_tree.column(col_id, width=width, anchor=anchor, stretch=stretch)
+
+        self.result_tree.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        self.result_tree.bind("<Button-1>", self._on_result_click)
+        self.result_tree.bind("<Double-1>", self._open_detail_from_selection)
+
+        self.result_tree.tag_configure("odd", background="#FAFAFA")
+        self.result_tree.tag_configure("even", background="white")
+        self.result_tree.tag_configure("error", foreground="#D32F2F")
+
+    def set_compare_callback(self, callback):
+        self._on_compare = callback
+
+    def set_detail_callback(self, callback):
+        self._on_detail = callback
+
+    def add_stock(self, stock_id: str, label: str = "") -> bool:
+        sid = str(stock_id or "").strip()
+        if not sid:
+            return False
+        if any(item["stock_id"] == sid for item in self._selected):
+            self.status_label.config(text="此股票已在比較清單中")
+            return False
+        if len(self._selected) >= self.MAX_STOCKS:
+            self.status_label.config(text=f"最多只能比較 {self.MAX_STOCKS} 檔股票")
+            return False
+        display = label.strip() if label else sid
+        self._selected.append({"stock_id": sid, "label": display})
+        self._refresh_selected_list()
+        self.status_label.config(text=f"已加入 {display}")
+        return True
+
+    def get_stock_ids(self) -> list[str]:
+        return [item["stock_id"] for item in self._selected]
+
+    def clear_selected(self):
+        self._selected.clear()
+        self._refresh_selected_list()
+        self.status_label.config(text="")
+
+    def _remove_selected(self):
+        sel = self.selected_listbox.curselection()
+        if not sel:
+            return
+        idx = sel[0]
+        if 0 <= idx < len(self._selected):
+            removed = self._selected.pop(idx)
+            self._refresh_selected_list()
+            self.status_label.config(text=f"已移除 {removed.get('label', removed['stock_id'])}")
+
+    def _refresh_selected_list(self):
+        self.selected_listbox.delete(0, tk.END)
+        for item in self._selected:
+            self.selected_listbox.insert(tk.END, item.get("label") or item["stock_id"])
+        count = len(self._selected)
+        if count >= 2:
+            self.btn_compare.config(state="normal", text=f"開始比較（{count} 檔）")
+        else:
+            self.btn_compare.config(state="disabled", text="開始比較")
+
+    def _trigger_compare(self):
+        if self._on_compare:
+            self._on_compare()
+
+    def show_loading(self, count: int):
+        self._clear_results()
+        self.status_label.config(text=f"正在分析 {count} 檔股票，請稍候…")
+        self.btn_compare.config(state="disabled")
+
+    def show_error(self, message: str):
+        self.status_label.config(text=message)
+
+    def render_results(self, results: list[dict]):
+        self._clear_results()
+        self._refresh_selected_list()
+        if not results:
+            self.status_label.config(text="無比較結果")
+            return
+
+        for i, row in enumerate(results):
+            tag = "error" if not row.get("ok") else ("odd" if i % 2 else "even")
+            if not row.get("ok"):
+                item_id = self.result_tree.insert(
+                    "",
+                    "end",
+                    values=(
+                        row.get("stock_id", "—"),
+                        "—",
+                        "—",
+                        "—",
+                        "—",
+                        row.get("error", "分析失敗"),
+                        "—",
+                    ),
+                    tags=(tag,),
+                )
+                continue
+
+            summary = row.get("summary") or {}
+            stock_id = row.get("stock_id") or summary.get("公司代號") or ""
+            entry = summary.get("入手參考", "")
+            if len(entry) > 120:
+                entry = entry[:117] + "…"
+            buy = summary.get("建議買入區間", "—")
+            note = summary.get("買入區間說明", "")
+            if note:
+                buy = f"{buy}（{note}）"
+
+            item_id = self.result_tree.insert(
+                "",
+                "end",
+                values=(
+                    summary.get("公司代號") or stock_id,
+                    summary.get("顯示名稱", "—"),
+                    summary.get("綜合得分", "—"),
+                    summary.get("評等", "—"),
+                    buy,
+                    entry,
+                    "詳細",
+                ),
+                tags=(tag,),
+            )
+            self._result_stock_ids[item_id] = stock_id
+
+        self.status_label.config(text="比較完成 — 點「詳細」或雙擊列可查看完整分析")
+
+    def _clear_results(self):
+        for item in self.result_tree.get_children():
+            self.result_tree.delete(item)
+        self._result_stock_ids.clear()
+
+    def _on_result_click(self, event):
+        region = self.result_tree.identify_region(event.x, event.y)
+        if region != "cell":
+            return
+        col = self.result_tree.identify_column(event.x)
+        if col != "#7":
+            return
+        item = self.result_tree.identify_row(event.y)
+        if item:
+            self._open_detail(item)
+
+    def _open_detail_from_selection(self, _event=None):
+        selected = self.result_tree.selection()
+        if not selected:
+            return
+        self._open_detail(selected[0])
+
+    def _open_detail(self, item_id: str):
+        stock_id = self._result_stock_ids.get(item_id)
+        if stock_id and self._on_detail:
+            self._on_detail(stock_id)

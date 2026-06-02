@@ -5,7 +5,7 @@ from typing import Any
 
 import pandas as pd
 
-from advice import build_investment_advice
+from advice import advice_compare_summary, build_investment_advice
 from logic import StockAnalyzer
 from report_export import build_pdf_report
 from stock_search import format_stock_option, load_bundled_stock_list, resolve_stock_input, search_stocks
@@ -64,7 +64,7 @@ def resolve_stock(query: str) -> str | None:
     return resolve_stock_input(query, stocks)
 
 
-def run_analysis(stock_id: str, display_days: int = 90) -> dict:
+def run_analysis(stock_id: str, display_days: int = 90, *, include_chart: bool = True) -> dict:
     """執行完整分析，回傳 JSON 可序列化結果"""
     analyzer = StockAnalyzer(stock_id)
     sections = analyzer.analyze_all()
@@ -81,7 +81,7 @@ def run_analysis(stock_id: str, display_days: int = 90) -> dict:
         technical_raw = analyzer.get_technical_chart_data(display_days=display_days)
 
     chart_b64 = None
-    if "error" not in technical_raw and technical_raw.get("full_data") is not None:
+    if include_chart and "error" not in technical_raw and technical_raw.get("full_data") is not None:
         from chart_render import render_chart_png
 
         png = render_chart_png(
@@ -106,6 +106,65 @@ def run_analysis(stock_id: str, display_days: int = 90) -> dict:
         },
         "chart_base64": chart_b64,
     }
+
+
+COMPARE_MAX_STOCKS = 8
+COMPARE_MAX_WORKERS = 2
+
+
+def run_compare(stock_ids: list[str], display_days: int = 90) -> dict:
+    """多檔股票比較：回傳各檔精簡評估摘要"""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    unique: list[str] = []
+    seen: set[str] = set()
+    for raw in stock_ids:
+        sid = str(raw or "").strip()
+        if not sid or sid in seen:
+            continue
+        seen.add(sid)
+        unique.append(sid)
+
+    if len(unique) < 2:
+        raise ValueError("請至少選擇 2 檔股票進行比較")
+
+    if len(unique) > COMPARE_MAX_STOCKS:
+        raise ValueError(f"最多同時比較 {COMPARE_MAX_STOCKS} 檔股票")
+
+    results: list[dict] = []
+    with ThreadPoolExecutor(max_workers=COMPARE_MAX_WORKERS) as pool:
+        futures = {
+            pool.submit(run_analysis, sid, display_days, include_chart=False): sid
+            for sid in unique
+        }
+        for fut in as_completed(futures):
+            sid = futures[fut]
+            try:
+                data = fut.result()
+                results.append(
+                    {
+                        "stock_id": data.get("stock_id") or sid,
+                        "ok": True,
+                        "summary": advice_compare_summary(data.get("advice") or {}),
+                        "errors": data.get("errors") or [],
+                    }
+                )
+            except Exception as exc:
+                results.append(
+                    {
+                        "stock_id": sid,
+                        "ok": False,
+                        "error": str(exc),
+                    }
+                )
+
+    results.sort(
+        key=lambda row: (
+            not row.get("ok"),
+            -(row.get("summary") or {}).get("綜合得分", 0),
+        )
+    )
+    return {"results": results}
 
 
 def build_report_pdf(

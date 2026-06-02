@@ -7,11 +7,12 @@ from tkinter import filedialog, messagebox, ttk
 from logic import StockAnalyzer
 from charts import TechnicalChart
 from settings import load_last_stock, save_last_stock
-from widgets import AdviceTab, ChipsTab, FundamentalTab, ProfileTab, TabTable, configure_table_styles
+from widgets import AdviceTab, ChipsTab, CompareTab, FundamentalTab, ProfileTab, TabTable, configure_table_styles
 from advice import build_investment_advice
 from report_export import export_pdf_report, report_download_filename
 from stock_search import preload_stock_list
 from stock_search_box import StockSearchBox
+from web_service import run_compare
 
 
 class StockApp:
@@ -26,6 +27,7 @@ class StockApp:
 
         self.is_loading = False
         self._analysis_id = 0
+        self._compare_id = 0
         self.btn_search = None
         self.stock_search = None
         self.entry_stock = None
@@ -66,6 +68,13 @@ class StockApp:
         )
         self.btn_search.pack(side="left", padx=10)
 
+        self.btn_add_compare = tk.Button(
+            search_frame, text="加入比較", command=self.add_to_compare,
+            font=("Microsoft JhengHei", 10), bg="#E5E5EA", fg="#333333",
+            padx=12, relief="flat", cursor="hand2",
+        )
+        self.btn_add_compare.pack(side="left", padx=(0, 6))
+
         self.status_label = tk.Label(
             search_frame, text="", font=("Microsoft JhengHei", 9),
             bg="#F5F5F7", fg="#666666",
@@ -84,6 +93,8 @@ class StockApp:
 
         self.advice_tab = AdviceTab(self.notebook)
         self.advice_tab.set_export_callback(self.export_report)
+        self.compare_tab = CompareTab(self.notebook, on_detail=self.start_analysis_for)
+        self.compare_tab.set_compare_callback(self.start_compare)
         self.profile_tab = ProfileTab(self.notebook)
         self.fundamental_tab = FundamentalTab(self.notebook)
         self.technical_frame, self.technical_chart = self.create_technical_tab("技術面形態")
@@ -173,6 +184,7 @@ class StockApp:
 
         self.stock_search.config(state=state)
         self.btn_search.config(state=state, text="分析中..." if loading else "開始全方位診斷")
+        self.btn_add_compare.config(state=state)
 
         if loading:
             self.status_label.config(text=status or "載入中，請稍候…")
@@ -200,6 +212,71 @@ class StockApp:
         self.chips_tab.show_loading()
         self.technical_chart.show_loading()
         self.news_table.show_loading("消息面情報 (最新市場快訊)")
+
+    def add_to_compare(self):
+        """將目前搜尋列的股票加入比較清單"""
+        raw = self.stock_search.get_raw()
+        stock_id = self.stock_search.get_stock_code()
+        if not raw:
+            messagebox.showwarning("提示", "請先輸入股票代號或名稱！")
+            return
+        if not stock_id:
+            messagebox.showwarning(
+                "提示",
+                "找不到符合的股票，請從下拉清單選擇，或輸入更完整的代號 / 名稱。",
+            )
+            return
+        if self.compare_tab.add_stock(stock_id, raw):
+            self.notebook.select(self.compare_tab.frame)
+
+    def start_analysis_for(self, stock_id: str):
+        """由比較結果跳轉至單檔完整分析"""
+        self.stock_search.insert(stock_id)
+        self.start_analysis()
+
+    def start_compare(self):
+        """觸發多檔股票比較"""
+        stock_ids = self.compare_tab.get_stock_ids()
+        if len(stock_ids) < 2:
+            messagebox.showwarning("提示", "請至少加入 2 檔股票再開始比較。")
+            return
+
+        self._compare_id += 1
+        compare_id = self._compare_id
+        self._set_loading(True, f"正在比較 {len(stock_ids)} 檔股票…")
+        self.compare_tab.show_loading(len(stock_ids))
+        threading.Thread(
+            target=self._fetch_compare,
+            args=(stock_ids, compare_id),
+            daemon=True,
+        ).start()
+
+    def _fetch_compare(self, stock_ids: list[str], compare_id: int):
+        try:
+            result = run_compare(stock_ids)
+            self.root.after(
+                0,
+                lambda r=result: self._finish_compare(r, compare_id),
+            )
+        except Exception as exc:
+            self.root.after(
+                0,
+                lambda msg=str(exc): self._on_compare_failed(msg, compare_id),
+            )
+
+    def _finish_compare(self, result: dict, compare_id: int):
+        if compare_id != self._compare_id:
+            return
+        self.compare_tab.render_results(result.get("results", []))
+        self._set_loading(False, "比較完成")
+        self.notebook.select(self.compare_tab.frame)
+
+    def _on_compare_failed(self, message: str, compare_id: int | None = None):
+        if compare_id is not None and compare_id != self._compare_id:
+            return
+        self.compare_tab.show_error(message)
+        messagebox.showerror("比較失敗", f"股票比較時發生錯誤：\n{message}")
+        self._set_loading(False)
 
     def start_analysis(self):
         """

@@ -15,6 +15,7 @@ from web_service import (
     get_stock_suggestions,
     resolve_stock,
     run_analysis,
+    run_compare,
 )
 
 ROOT = Path(__file__).parent
@@ -44,6 +45,11 @@ class AnalyzeRequest(BaseModel):
     eps_filter: str = Field(default="12", description="季 EPS 篩選模式")
 
 
+class CompareRequest(BaseModel):
+    stock_ids: list[str] = Field(..., min_length=2, max_length=8, description="要比較的股票代號")
+    display_days: int = Field(default=90, ge=30, le=180)
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
@@ -68,6 +74,24 @@ def api_analyze(body: AnalyzeRequest):
         return result
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"分析失敗：{exc}") from exc
+
+
+@app.post("/api/compare")
+def api_compare(body: CompareRequest):
+    stock_ids: list[str] = []
+    for raw in body.stock_ids:
+        sid = raw.strip() or resolve_stock(raw) or ""
+        if sid:
+            stock_ids.append(sid)
+    if len(stock_ids) < 2:
+        raise HTTPException(status_code=400, detail="請至少選擇 2 檔有效股票")
+
+    try:
+        return run_compare(stock_ids, display_days=body.display_days)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"比較失敗：{exc}") from exc
 
 
 @app.post("/api/report")
