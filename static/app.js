@@ -25,6 +25,8 @@ const compareStatus = $("#compare-status");
 const compareResults = $("#compare-results");
 const btnAddCompare = $("#btn-add-compare");
 const btnRunCompare = $("#btn-run-compare");
+const cachedSingle = $("#cached-single");
+const btnShowCached = $("#btn-show-cached");
 
 let selectedStockId = "";
 let lastPayload = null;
@@ -38,6 +40,8 @@ let compareSelectedId = "";
 let compareAnalysisCache = {};
 /** 最近一次比較 API 回應，切換分頁時還原表格 */
 let lastComparePayload = null;
+/** 從比較切回單檔的暫存分析，點按鈕才展開 */
+let pendingSingleData = null;
 let techChartInstance = null;
 let fundamentalCache = null;
 let revenueFilter = "24";
@@ -125,6 +129,23 @@ function setStatus(msg, isError = false) {
   statusEl.className = isError ? "status error" : "status";
 }
 
+function showCachedSingleButton(data) {
+  if (!cachedSingle || !btnShowCached) return;
+  pendingSingleData = data;
+  const advice = data?.advice || {};
+  const sid = String(data?.stock_id || advice.公司代號 || "").trim();
+  const name = String(advice.公司名稱 || advice.顯示名稱 || "").trim();
+  const label = [sid, name].filter(Boolean).join(" ");
+  btnShowCached.textContent = label || "點此查看詳細資料";
+  cachedSingle.classList.remove("hidden");
+}
+
+function hideCachedSingleButton() {
+  pendingSingleData = null;
+  if (!cachedSingle) return;
+  cachedSingle.classList.add("hidden");
+}
+
 function showPanel(name) {
   document.querySelectorAll(".tab").forEach((t) => {
     t.classList.toggle("active", t.dataset.tab === name);
@@ -203,6 +224,7 @@ function setAppMode(mode) {
 
   if (mode === "compare") {
     results.classList.add("hidden");
+    hideCachedSingleButton();
     renderCompareChips();
     if (lastComparePayload?.results?.length) {
       renderCompareResults(lastComparePayload);
@@ -374,36 +396,47 @@ function renderCompareResults(payload) {
     return;
   }
 
+  const oneLine = (text, max = 42) => {
+    const s = String(text || "")
+      .replace(/\s+/g, " ")
+      .replace(/[，。；、]+/g, " ")
+      .trim();
+    if (!s) return "—";
+    return s.length > max ? `${s.slice(0, max - 1)}…` : s;
+  };
+
   const body = rows
     .map((row) => {
       if (!row.ok) {
         return `<tr class="compare-row-error">
-          <td data-label="代號">${esc(row.stock_id || "—")}</td>
-          <td data-label="名稱" colspan="5">${esc(row.error || "分析失敗")}</td>
+          <td data-label="標的">${esc(row.stock_id || "—")}</td>
+          <td data-label="比較" colspan="2">${esc(row.error || "分析失敗")}</td>
         </tr>`;
       }
       const s = row.summary || {};
       const tone = s.tone || "neutral";
-      const buyNote = s.買入區間說明
-        ? `<span class="compare-buy-note">${esc(s.買入區間說明)}</span>`
-        : "";
-      const errNote =
-        row.errors?.length
-          ? `<span class="compare-buy-note">部分資料未能載入：${esc(row.errors.join("、"))}</span>`
-          : "";
+      const entryText = oneLine(s.入手參考 || "—", 48);
+      const buyText = String(s.建議買入區間 || "—") || "—";
+      const extraNotes = [];
+      if (s.買入區間說明) extraNotes.push(`買價：${s.買入區間說明}`);
+      if (row.errors?.length) extraNotes.push(`部分資料未能載入：${row.errors.join("、")}`);
+      const title = extraNotes.length ? esc(extraNotes.join("\n")) : "";
       return `<tr>
-        <td class="col-code" data-label="代號"><strong>${esc(s.公司代號 || row.stock_id || "—")}</strong></td>
-        <td class="col-name" data-label="名稱"><span class="compare-name">${esc(s.顯示名稱 || "—")}</span></td>
-        <td class="col-score" data-label="綜合得分">
-          <div class="compare-score-cell">
-            <span class="compare-score">${esc(String(s.綜合得分 ?? "—"))}</span>
-            <span class="compare-verdict ${esc(tone)}">${esc(s.評等 || "—")}</span>
+        <td class="col-target" data-label="標的">
+          <div class="compare-target">
+            <strong class="compare-code">${esc(s.公司代號 || row.stock_id || "—")}</strong>
+            <span class="compare-target-name" title="${esc(s.顯示名稱 || "—")}">${esc(s.顯示名稱 || "—")}</span>
           </div>
         </td>
-        <td class="col-entry" data-label="入手參考"><div class="compare-entry">${esc(s.入手參考 || "—")}</div></td>
-        <td class="col-buy" data-label="建議買價">
-          <span class="compare-buy">${esc(s.建議買入區間 || "—")}</span>
-          ${buyNote}${errNote}
+        <td class="col-metrics" data-label="比較" title="${title}">
+          <div class="compare-metrics">
+            <div class="compare-metrics-row">
+              <span class="compare-score">${esc(String(s.綜合得分 ?? "—"))}</span>
+              <span class="compare-verdict ${esc(tone)}">${esc(s.評等 || "—")}</span>
+            </div>
+            <div class="compare-entry-one" title="${esc(s.入手參考 || "—")}">${esc(entryText)}</div>
+            <div class="compare-buy-one">${esc(buyText)}</div>
+          </div>
         </td>
         <td class="col-action" data-label="操作">
           <button type="button" class="compare-detail-btn" data-detail-id="${esc(row.stock_id || s.公司代號 || "")}">詳細資訊</button>
@@ -418,20 +451,14 @@ function renderCompareResults(payload) {
       <div class="compare-table-wrap">
         <table class="compare-table">
           <colgroup>
-            <col class="col-code" />
-            <col class="col-name" />
-            <col class="col-score" />
-            <col class="col-entry" />
-            <col class="col-buy" />
+            <col class="col-target" />
+            <col class="col-metrics" />
             <col class="col-action" />
           </colgroup>
           <thead>
             <tr>
-              <th class="col-code">代號</th>
-              <th class="col-name">名稱</th>
-              <th class="col-score">綜合得分</th>
-              <th class="col-entry">入手參考</th>
-              <th class="col-buy">建議買價</th>
+              <th class="col-target">代號／名稱</th>
+              <th class="col-metrics">綜合得分／入手參考／建議買價</th>
               <th class="col-action"></th>
             </tr>
           </thead>
@@ -461,17 +488,22 @@ function applyAnalysisResult(data, { fromCompare = false } = {}) {
   const stockId = data.stock_id || "";
   lastPayload = { stock_id: stockId, query: stockId };
   lastAdvice = data.advice || null;
-  renderAll(data);
   input.value = stockId;
   selectedStockId = stockId;
 
-  let status = "分析完成";
   if (fromCompare) {
-    status = "已顯示比較時載入的資料（未重新請求 FinMind）";
+    // 回到單檔時先顯示快捷按鈕，點擊才展開詳細資料
+    results.classList.add("hidden");
+    showCachedSingleButton(data);
+    setStatus("");
+    return;
+  } else {
+    hideCachedSingleButton();
+    renderAll(data);
   }
-  if (data.errors?.length) {
-    status += `（部分資料未能載入：${data.errors.join("、")}）`;
-  }
+
+  let status = "分析完成";
+  if (data.errors?.length) status += `（部分資料未能載入：${data.errors.join("、")}）`;
   setStatus(status);
   btnReport.disabled = Boolean(lastAdvice);
 }
@@ -1204,6 +1236,14 @@ async function downloadReport() {
 btnAnalyze.addEventListener("click", analyze);
 btnReport.addEventListener("click", downloadReport);
 btnRunCompare?.addEventListener("click", runCompare);
+btnShowCached?.addEventListener("click", () => {
+  if (!pendingSingleData) return;
+  const data = pendingSingleData;
+  hideCachedSingleButton();
+  renderAll(data);
+  results.classList.remove("hidden");
+  showPanel("advice");
+});
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") analyze();
 });
