@@ -135,9 +135,10 @@ function showCachedSingleButton(data) {
   const advice = data?.advice || {};
   const sid = String(data?.stock_id || advice.公司代號 || "").trim();
   const name = String(advice.公司名稱 || advice.顯示名稱 || "").trim();
-  const label = [sid, name].filter(Boolean).join(" ");
-  btnShowCached.textContent = label || "點此查看詳細資料";
+  const label = [sid, name].filter(Boolean).join(" ").trim();
+  btnShowCached.textContent = label ? `${label}（點此顯示詳細資料）` : "點此顯示詳細資料";
   cachedSingle.classList.remove("hidden");
+  btnShowCached.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 function hideCachedSingleButton() {
@@ -494,6 +495,7 @@ function applyAnalysisResult(data, { fromCompare = false } = {}) {
   if (fromCompare) {
     // 回到單檔時先顯示快捷按鈕，點擊才展開詳細資料
     results.classList.add("hidden");
+    compareResults?.classList.add("hidden");
     showCachedSingleButton(data);
     setStatus("");
     return;
