@@ -11,6 +11,12 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.9"
+      - key: MPLBACKEND
+        value: Agg
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: COMPARE_MAX_WORKERS
+        value: "1"
       - key: FINMIND_TOKEN
         sync: false
     healthCheckPath: /api/health

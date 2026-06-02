@@ -1,17 +1,15 @@
-"""Web 版分析服務：重用核心邏輯並輸出 JSON"""
+"""Web 版分析服務：重用核心邏輯並輸出 JSON（重模組延遲載入，加快 Render 啟動）"""
 
 import base64
+import os
 from typing import Any
 
-import pandas as pd
-
-from advice import advice_compare_summary, build_investment_advice
-from logic import StockAnalyzer
-from report_export import build_pdf_report
-from stock_search import format_stock_option, load_bundled_stock_list, resolve_stock_input, search_stocks
+# 分析、PDF、pandas 等僅在 API 被呼叫時才 import，避免部署階段 OOM／長時間無 port
 
 
 def _json_safe(value: Any) -> Any:
+    import pandas as pd
+
     if isinstance(value, pd.DataFrame):
         return None
     if isinstance(value, dict):
@@ -44,6 +42,8 @@ def _prepare_technical(technical: dict, display_days: int = 90) -> dict:
 
 
 def get_stock_suggestions(query: str, limit: int = 12) -> list[dict]:
+    from stock_search import format_stock_option, load_bundled_stock_list, search_stocks
+
     stocks = load_bundled_stock_list()
     if not stocks:
         return []
@@ -60,12 +60,17 @@ def get_stock_suggestions(query: str, limit: int = 12) -> list[dict]:
 
 
 def resolve_stock(query: str) -> str | None:
+    from stock_search import load_bundled_stock_list, resolve_stock_input
+
     stocks = load_bundled_stock_list()
     return resolve_stock_input(query, stocks)
 
 
 def run_analysis(stock_id: str, display_days: int = 90, *, include_chart: bool = True) -> dict:
     """執行完整分析，回傳 JSON 可序列化結果"""
+    from advice import build_investment_advice
+    from logic import StockAnalyzer
+
     analyzer = StockAnalyzer(stock_id)
     sections = analyzer.analyze_all()
     errors = analyzer.get_data_error_summary()
@@ -109,12 +114,14 @@ def run_analysis(stock_id: str, display_days: int = 90, *, include_chart: bool =
 
 
 COMPARE_MAX_STOCKS = 8
-COMPARE_MAX_WORKERS = 2
+COMPARE_MAX_WORKERS = max(1, min(2, int(os.environ.get("COMPARE_MAX_WORKERS", "1"))))
 
 
 def run_compare(stock_ids: list[str], display_days: int = 90) -> dict:
     """多檔股票比較：回傳各檔精簡評估摘要"""
     from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    from advice import advice_compare_summary
 
     unique: list[str] = []
     seen: set[str] = set()
@@ -175,6 +182,8 @@ def build_report_pdf(
     eps_filter: str = "12",
 ) -> bytes:
     """由分析結果產生 PDF 報告"""
+    from report_export import build_pdf_report
+
     chart_bytes = None
     if result.get("chart_base64"):
         chart_bytes = base64.b64decode(result["chart_base64"])

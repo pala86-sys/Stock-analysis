@@ -19,6 +19,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from filename_util import report_download_filename
 from settings import resource_path
 from indicators import (
     eps_filter_label,
@@ -490,23 +491,6 @@ def _news_block(news: list) -> list:
             col_widths=[8 * mm, 58 * mm, 24 * mm, 26 * mm, usable - 116 * mm],
         )
     ]
-
-
-def report_download_filename(stock_id: str, advice: dict) -> str:
-    """下載檔名：股票代碼 + 股票名稱 + 報告.pdf"""
-    sid = _text(stock_id).strip()
-    name = _text(advice.get("公司名稱")).strip()
-    if not name:
-        display = _text(advice.get("顯示名稱")).strip()
-        for token in (f"（{sid}）", f"({sid})", sid):
-            display = display.replace(token, "")
-        name = display.strip(" 　（）()")
-    if not name:
-        name = sid
-    for ch in '\\/:*?"<>|\n\r\t':
-        sid = sid.replace(ch, "")
-        name = name.replace(ch, "")
-    return f"{sid}{name}報告.pdf"
 
 
 def _chart_block(chart_png_bytes: bytes) -> list:

@@ -1,4 +1,8 @@
-"""台股多維度全方位觀測儀 — Web 版（FastAPI + Render）"""
+"""台股多維度全方位觀測儀 — Web 版（FastAPI + Render）
+
+啟動時僅載入 FastAPI 與靜態路由；分析／PDF 等重模組在首次 API 呼叫時才載入，
+讓 Render 能盡快偵測到 open port，避免部署卡在 No open ports detected。
+"""
 
 from pathlib import Path
 from urllib.parse import quote
@@ -9,14 +13,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from report_export import report_download_filename
-from web_service import (
-    build_report_pdf,
-    get_stock_suggestions,
-    resolve_stock,
-    run_analysis,
-    run_compare,
-)
+from filename_util import report_download_filename
 
 ROOT = Path(__file__).parent
 STATIC = ROOT / "static"
@@ -57,20 +54,24 @@ def health():
 
 @app.get("/api/stocks/search")
 def api_search_stocks(q: str = Query("", min_length=0)):
+    import web_service as svc
+
     q = q.strip()
     if not q:
         return {"results": []}
-    return {"results": get_stock_suggestions(q)}
+    return {"results": svc.get_stock_suggestions(q)}
 
 
 @app.post("/api/analyze")
 def api_analyze(body: AnalyzeRequest):
-    stock_id = body.stock_id.strip() or resolve_stock(body.query) or ""
+    import web_service as svc
+
+    stock_id = body.stock_id.strip() or svc.resolve_stock(body.query) or ""
     if not stock_id:
         raise HTTPException(status_code=400, detail="找不到符合的股票，請輸入代號或從清單選擇")
 
     try:
-        result = run_analysis(stock_id, display_days=body.display_days)
+        result = svc.run_analysis(stock_id, display_days=body.display_days)
         return result
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"分析失敗：{exc}") from exc
@@ -78,16 +79,18 @@ def api_analyze(body: AnalyzeRequest):
 
 @app.post("/api/compare")
 def api_compare(body: CompareRequest):
+    import web_service as svc
+
     stock_ids: list[str] = []
     for raw in body.stock_ids:
-        sid = raw.strip() or resolve_stock(raw) or ""
+        sid = raw.strip() or svc.resolve_stock(raw) or ""
         if sid:
             stock_ids.append(sid)
     if len(stock_ids) < 2:
         raise HTTPException(status_code=400, detail="請至少選擇 2 檔有效股票")
 
     try:
-        return run_compare(stock_ids, display_days=body.display_days)
+        return svc.run_compare(stock_ids, display_days=body.display_days)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -96,13 +99,15 @@ def api_compare(body: CompareRequest):
 
 @app.post("/api/report")
 def api_report(body: AnalyzeRequest):
-    stock_id = body.stock_id.strip() or resolve_stock(body.query) or ""
+    import web_service as svc
+
+    stock_id = body.stock_id.strip() or svc.resolve_stock(body.query) or ""
     if not stock_id:
         raise HTTPException(status_code=400, detail="找不到符合的股票")
 
     try:
-        result = run_analysis(stock_id, display_days=body.display_days)
-        pdf_bytes = build_report_pdf(
+        result = svc.run_analysis(stock_id, display_days=body.display_days)
+        pdf_bytes = svc.build_report_pdf(
             stock_id,
             result,
             revenue_filter=body.revenue_filter,
