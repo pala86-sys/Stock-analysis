@@ -1262,13 +1262,13 @@ class CompareTab:
         tree_wrap.pack(fill="both", expand=True, padx=16, pady=(0, 14))
 
         columns = [
-            ("code", "代號", 70, "center"),
-            ("name", "名稱", 120, "w"),
-            ("score", "綜合得分", 70, "center"),
-            ("verdict", "評等", 80, "center"),
-            ("buy", "建議買價", 120, "center"),
-            ("entry", "入手參考", 320, "w"),
-            ("action", "操作", 70, "center"),
+            ("code", "代號", 80, "center"),
+            ("name", "名稱", 200, "w"),
+            ("score", "綜合得分", 80, "center"),
+            ("verdict", "評等", 88, "center"),
+            ("buy", "建議買價", 140, "center"),
+            ("entry", "入手參考", 280, "w"),
+            ("action", "操作", 72, "center"),
         ]
         col_ids = [c[0] for c in columns]
         self.result_tree = ttk.Treeview(

@@ -34,6 +34,10 @@ let compareDebounceTimer = null;
 let appMode = "single";
 let compareList = [];
 let compareSelectedId = "";
+/** @type {Record<string, object>} 比較完成後快取各檔完整分析 */
+let compareAnalysisCache = {};
+/** 最近一次比較 API 回應，切換分頁時還原表格 */
+let lastComparePayload = null;
 let techChartInstance = null;
 let fundamentalCache = null;
 let revenueFilter = "24";
@@ -196,8 +200,16 @@ function setAppMode(mode) {
   });
   if (searchSingle) searchSingle.classList.toggle("hidden", mode !== "single");
   if (searchCompare) searchCompare.classList.toggle("hidden", mode !== "compare");
+
   if (mode === "compare") {
     results.classList.add("hidden");
+    renderCompareChips();
+    if (lastComparePayload?.results?.length) {
+      renderCompareResults(lastComparePayload);
+      setCompareStatus("比較完成 — 可繼續加入股票或查看詳細資訊");
+    }
+  } else if (mode === "single" && !results.classList.contains("hidden")) {
+    compareResults?.classList.add("hidden");
   }
 }
 
@@ -380,18 +392,20 @@ function renderCompareResults(payload) {
           ? `<span class="compare-buy-note">部分資料未能載入：${esc(row.errors.join("、"))}</span>`
           : "";
       return `<tr>
-        <td data-label="代號"><strong>${esc(s.公司代號 || row.stock_id || "—")}</strong></td>
-        <td data-label="名稱">${esc(s.顯示名稱 || "—")}</td>
-        <td data-label="綜合得分">
-          <div class="compare-score">${esc(String(s.綜合得分 ?? "—"))}</div>
-          <span class="compare-verdict ${esc(tone)}">${esc(s.評等 || "—")}</span>
+        <td class="col-code" data-label="代號"><strong>${esc(s.公司代號 || row.stock_id || "—")}</strong></td>
+        <td class="col-name" data-label="名稱"><span class="compare-name">${esc(s.顯示名稱 || "—")}</span></td>
+        <td class="col-score" data-label="綜合得分">
+          <div class="compare-score-cell">
+            <span class="compare-score">${esc(String(s.綜合得分 ?? "—"))}</span>
+            <span class="compare-verdict ${esc(tone)}">${esc(s.評等 || "—")}</span>
+          </div>
         </td>
-        <td data-label="入手參考"><div class="compare-entry">${esc(s.入手參考 || "—")}</div></td>
-        <td data-label="建議買價">
+        <td class="col-entry" data-label="入手參考"><div class="compare-entry">${esc(s.入手參考 || "—")}</div></td>
+        <td class="col-buy" data-label="建議買價">
           <span class="compare-buy">${esc(s.建議買入區間 || "—")}</span>
           ${buyNote}${errNote}
         </td>
-        <td data-label="操作">
+        <td class="col-action" data-label="操作">
           <button type="button" class="compare-detail-btn" data-detail-id="${esc(row.stock_id || s.公司代號 || "")}">詳細資訊</button>
         </td>
       </tr>`;
@@ -403,20 +417,28 @@ function renderCompareResults(payload) {
       <h2 class="compare-panel-title">股票比較結果</h2>
       <div class="compare-table-wrap">
         <table class="compare-table">
+          <colgroup>
+            <col class="col-code" />
+            <col class="col-name" />
+            <col class="col-score" />
+            <col class="col-entry" />
+            <col class="col-buy" />
+            <col class="col-action" />
+          </colgroup>
           <thead>
             <tr>
-              <th>代號</th>
-              <th>名稱</th>
-              <th>綜合得分</th>
-              <th>入手參考</th>
-              <th>建議買價</th>
-              <th></th>
+              <th class="col-code">代號</th>
+              <th class="col-name">名稱</th>
+              <th class="col-score">綜合得分</th>
+              <th class="col-entry">入手參考</th>
+              <th class="col-buy">建議買價</th>
+              <th class="col-action"></th>
             </tr>
           </thead>
           <tbody>${body}</tbody>
         </table>
       </div>
-      <p class="score-legend-note" style="margin-top:12px">依綜合得分由高至低排序。點「詳細資訊」可查看該檔完整分析。</p>
+      <p class="score-legend-note" style="margin-top:12px">依綜合得分由高至低排序。點「詳細資訊」將使用比較時已載入的資料，不會重新請求 API。</p>
     </div>`;
   compareResults.classList.remove("hidden");
 
@@ -424,6 +446,34 @@ function renderCompareResults(payload) {
     btn.addEventListener("click", () => analyzeStock(btn.dataset.detailId));
   });
   compareResults.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function cacheCompareFullResults(payload) {
+  compareAnalysisCache = {};
+  for (const row of payload?.results || []) {
+    if (!row.ok || !row.full) continue;
+    const id = String(row.stock_id || row.full.stock_id || "").trim();
+    if (id) compareAnalysisCache[id] = row.full;
+  }
+}
+
+function applyAnalysisResult(data, { fromCompare = false } = {}) {
+  const stockId = data.stock_id || "";
+  lastPayload = { stock_id: stockId, query: stockId };
+  lastAdvice = data.advice || null;
+  renderAll(data);
+  input.value = stockId;
+  selectedStockId = stockId;
+
+  let status = "分析完成";
+  if (fromCompare) {
+    status = "已顯示比較時載入的資料（未重新請求 FinMind）";
+  }
+  if (data.errors?.length) {
+    status += `（部分資料未能載入：${data.errors.join("、")}）`;
+  }
+  setStatus(status);
+  btnReport.disabled = Boolean(lastAdvice);
 }
 
 async function runCompare() {
@@ -444,6 +494,8 @@ async function runCompare() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || "比較失敗");
+    cacheCompareFullResults(data);
+    lastComparePayload = data;
     renderCompareResults(data);
     setCompareStatus("比較完成");
   } catch (err) {
@@ -456,10 +508,18 @@ async function runCompare() {
 
 async function analyzeStock(stockId) {
   if (!stockId) return;
+  const sid = String(stockId).trim();
   setAppMode("single");
-  selectedStockId = stockId;
-  input.value = stockId;
-  await runAnalysis(stockId, stockId);
+  selectedStockId = sid;
+  input.value = sid;
+
+  const cached = compareAnalysisCache[sid];
+  if (cached) {
+    applyAnalysisResult(cached, { fromCompare: true });
+    return;
+  }
+
+  await runAnalysis(sid, sid);
 }
 
 function toRow(item) {
@@ -1052,16 +1112,12 @@ async function runAnalysis(stockId, query) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || "分析失敗");
 
-    lastPayload = { stock_id: stockId, query: data.stock_id || query };
-    lastAdvice = data.advice || null;
-    renderAll(data);
+    const resolvedId = data.stock_id || stockId || query;
+    if (resolvedId) compareAnalysisCache[resolvedId] = data;
+
+    applyAnalysisResult(data);
     input.value = data.stock_id || query;
     selectedStockId = data.stock_id || "";
-
-    let status = "分析完成";
-    if (data.errors?.length) status += `（部分資料未能載入：${data.errors.join("、")}）`;
-    setStatus(status);
-    btnReport.disabled = false;
   } catch (err) {
     setStatus(err.message || "分析失敗", true);
   } finally {

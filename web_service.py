@@ -154,6 +154,8 @@ def run_compare(stock_ids: list[str], display_days: int = 90) -> dict:
                         "ok": True,
                         "summary": advice_compare_summary(data.get("advice") or {}),
                         "errors": data.get("errors") or [],
+                        # 供前端「詳細資訊」直接顯示，避免再次請求 FinMind
+                        "full": data,
                     }
                 )
             except Exception as exc:
